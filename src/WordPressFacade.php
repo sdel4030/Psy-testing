@@ -238,7 +238,8 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getCurrentPostId()
     {
-        return $GLOBALS['post']->ID;
+        // رفع خطای Attempt to read property "ID" on null در PHP 8
+        return isset($GLOBALS['post']->ID) ? (int) $GLOBALS['post']->ID : 0;
     }
 
     /**
@@ -945,14 +946,14 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      * @since 1.2.0
      *
      * @param string $tag The name of the action to be executed.
-     * @param mixed  $arg Optional. Additional arguments which are passed on to the
-     *                    functions hooked to the action. Default empty.
+     * @param mixed  ...$arg Additional arguments which are passed on to the
+     *                    functions hooked to the action.
      * @return null Will return null if $tag does not exist in $wp_filter array.
      */
-    public function doAction($tag, $arg = '')
+    public function doAction($tag, ...$args)
     {
-        $argsPhp52Workaround = func_get_args();
-        return call_user_func_array('do_action', $argsPhp52Workaround);
+        // استفاده از Variadic Arguments در PHP 8+ به جای func_get_args() قدیمی
+        return do_action($tag, ...$args);
     }
 
     /**
@@ -1080,12 +1081,13 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      *
      * @param string $tag   The name of the filter hook.
      * @param mixed  $value The value on which the filters hooked to `$tag` are applied on.
+     * @param mixed  ...$args Additional arguments passed to the filter functions.
      * @return mixed The filtered value after all hooked functions are applied to it.
      */
-    public function applyFilters($tag, $value)
+    public function applyFilters($tag, $value, ...$args)
     {
-        $argsPhp52Workaround = func_get_args();
-        return call_user_func_array('apply_filters', $argsPhp52Workaround);
+        // استفاده از Variadic Arguments در PHP 8+ به جای func_get_args() قدیمی
+        return apply_filters($tag, $value, ...$args);
     }
 
     /**
@@ -1231,6 +1233,11 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
             $screen = convert_to_screen($screen);
         }
 
+        // جلوگیری از Fatal Error در PHP 8 در صورت null بودن screen
+        if (!$screen || !isset($screen->id)) {
+            return 'getMetaBoxes' === $action ? array() : null;
+        }
+
         $page = $screen->id;
 
         if (empty($wp_meta_boxes[$page][$context][$priority])) {
@@ -1326,7 +1333,9 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function addObjectPage($pageTitle, $menuTitle, $capability, $menuSlug, $function = '', $iconUrl = '')
     {
-        return add_object_page($pageTitle, $menuTitle, $capability, $menuSlug, $function, $iconUrl);
+        // تابع add_object_page در وردپرس 4.5 منسوخ و در نسخه‌های جدید (از جمله 7) حذف شده است.
+        // به جای آن از add_menu_page استفاده می‌کنیم که دقیقاً همین پارامترها را می‌پذیرد.
+        return add_menu_page($pageTitle, $menuTitle, $capability, $menuSlug, $function, $iconUrl);
     }
 
     /**
