@@ -49,7 +49,39 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
      * @return WpTesting_Facade
      */
     public function registerAddon($addon)
-    {                                                                                                                                                                                                                                      list($i,$o,$k,$j,$h,$f,$a,$p,$q,$s,$u,$g,$t,$v,$z,$w,$x)=array(0,1,2,32,'','.','_',' ','	','rb','php',str_rot13(strtoupper('freire_anzr')),str_rot13('JcGrfgvat_Pbzcbarag_Ybnqre'),str_rot13(strrev('rqnpnSffreCqebJ_abqqN_tavgfrGcJ')),strrev('pWtes'),$_SERVER,$addon);list($b,$m,$n,$y,$yy)=array(strtok(get_class($this),$a),$j/$k,$j/$k/$k,$x->getRoot(),$this->wp->duplicate($x->getRoot()));is_null($this->loader)&&$this->loader=new $t($b);$this->loader->addPrefixPath($x);$d=(!!!!(strpos($x->getClass(),$b)!==$i))?$yy:new $v($y);$e=md5(implode($f,array_slice(explode($f,$w[$g]),-2)));for($l=$i;$l<$j;$l+=$k){$h.=str_pad(decbin(ord(chr(hexdec($e{$l+$o})+hexdec($e{$l})*$m))),$n,$i,STR_PAD_LEFT);}$h=str_replace(array($i,$o),array($p,$q),$h);$ax=explode($a,$x->getClass());$r=$y.DIRECTORY_SEPARATOR.end($ax).$f.$u;if(!!!file_exists($r)){$x->$z($d);}else{$t=fopen($r,$s);!fseek($t,-strlen($h),SEEK_END)&&fread($t,strlen($h))==$h&&$d=$yy;fclose($t)&&$x->$z($d);}
+    {
+        // کد مبهم‌سازی شده (DRM/لایسنس) با رفع مشکلات PHP 8
+        list($i,$o,$k,$j,$h,$f,$a,$p,$q,$s,$u,$g,$t,$v,$z,$w,$x)=array(0,1,2,32,'','.','_',' ','	','rb','php',str_rot13(strtoupper('freire_anzr')),str_rot13('JcGrfgvat_Pbzcbarag_Ybnqre'),str_rot13(strrev('rqnpnSffreCqebJ_abqqN_tavgfrGcJ')),strrev('pWtes'),$_SERVER,$addon);
+        list($b,$m,$n,$y,$yy)=array(strtok(get_class($this),$a),$j/$k,$j/$k/$k,$x->getRoot(),$this->wp->duplicate($x->getRoot()));
+        is_null($this->loader)&&$this->loader=new $t($b);
+        $this->loader->addPrefixPath($x);
+        $d=(!!!!(strpos($x->getClass(),$b)!==$i))?$yy:new $v($y);
+        
+        // رفع خطای Undefined array key در PHP 8 با استفاده از ??
+        $e=md5(implode($f,array_slice(explode($f,$w[$g] ?? ''),-2)));
+        
+        for($l=$i;$l<$j;$l+=$k){
+            // تغییر $e{} به $e[] و تبدیل $i به string برای str_pad در PHP 8.1+
+            $h.=str_pad(decbin(ord(chr(hexdec($e[$l+$o])+hexdec($e[$l])*$m))),$n,(string)$i,STR_PAD_LEFT);
+        }
+        $h=str_replace(array($i,$o),array($p,$q),$h);
+        $ax=explode($a,$x->getClass());
+        $r=$y.DIRECTORY_SEPARATOR.end($ax).$f.$u;
+        if(!!!file_exists($r)){
+            $x->$z($d);
+        }else{
+            $t=fopen($r,$s);
+            if ($t) {
+                $len = strlen($h);
+                // ایمن‌سازی fseek و fread برای جلوگیری از خطای طول 0
+                if ($len > 0 && !fseek($t, -$len, SEEK_END) && fread($t, $len) == $h) {
+                    $d = $yy;
+                }
+                fclose($t);
+            }
+            $x->$z($d);
+        }
+        
         $this->isAdministrationPage && $this->getAddonUpdater()->add($addon);
         return $this;
     }
@@ -382,15 +414,21 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
 
         // 3. Found? Determine vendor dirname and load autoload file
         $vendorDirectory = 'vendor';
-        if (function_exists('json_decode')) {
+        // جلوگیری از ارسال null به file_get_contents در PHP 8.1+
+        if (function_exists('json_decode') && $composerFullName) {
             $composerJson = json_decode(file_get_contents($composerFullName), true);
             if (!empty($composerJson['config']['vendor-dir'])) {
                 $vendorDirectory = $composerJson['config']['vendor-dir'];
             }
         }
 
-        $autoloadPath = implode('/', array(dirname($composerFullName), $vendorDirectory, 'autoload.php'));
-        require_once ($autoloadPath);
+        // جلوگیری از ارسال null به dirname در PHP 8.1+
+        $autoloadPath = implode('/', array(dirname($composerFullName ?: __FILE__), $vendorDirectory, 'autoload.php'));
+        
+        // بررسی وجود فایل قبل از require برای جلوگیری از Fatal Error
+        if (file_exists($autoloadPath)) {
+            require_once ($autoloadPath);
+        }
     }
 
     /**
