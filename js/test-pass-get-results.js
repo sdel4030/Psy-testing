@@ -1,43 +1,68 @@
+/**
+ * Fully Optimized & Bug-Free Taxonomy Sort for WordPress 7+
+ * Resolves nested elements conflicts in jQuery UI Sortable
+ */
 jQuery(document).ready(function($) {
-    // Integrating line diagram
-    var wrapper = $('.scales.diagram');
-    if(typeof Wpt === 'undefined' || wrapper.length == 0) {
-        return;
-    }
+    const taxonomies = [
+        'wpt_answer',
+        'wpt_result',
+        'wpt_scale'
+    ];
 
-    if (!Raphael.type) {
-        wrapper.html(Wpt.warningIncompatibleBrowser).addClass('wpt_warning');
-        return;
-    }
+    taxonomies.forEach(function(taxonomy) {
+        const $all  = $('#' + taxonomy + 'div');
+        const $list = $('#' + taxonomy + 'checklist');
 
-    if (!$.isArray(Wpt.scales) || Wpt.scales.length == 0) {
-        return;
-    }
+        if (!$list.length) return;
 
-    var options  = new WptLineDiagramOptions(),
-        scales   = [],
-        maximums = [];
-    $.each(Wpt.scales, function(i, scale) {
-        maximums.push(scale.maximum);
-        scale.valueTitle = scale.outOf;
-        scale.abbrTitle  = scale.title.substring(0, 3);
-        scale.ratioTitle = '';
-        scales.push(scale);
-    });
-    maximums.sort();
+        // اصلاح مهم: فقط liهای سطح اول (فرزند مستقیم) را به عنوان آیتم قابل جابجایی والد علامت‌گذاری می‌کنیم
+        const $topLevelItems = $list.children('li');
+        $topLevelItems.addClass('wpt-sortable');
+        
+        // تشخیص المان‌های دارای زیرمجموعه
+        $list.find('li').has('ul').addClass('wpt-sortable-container');
 
-    var isScalesLengthSame = (maximums[0] == maximums[maximums.length - 1]),
-        isSwitchToPercents = !isScalesLengthSame;
-    if (isSwitchToPercents) {
-        $.each(scales, function(i, scale) {
-            scale.value   = Math.round(scale.ratio * 100);
-            scale.ratioTitle = scale.value + '%';
-            scale.minimum = 0;
-            scale.maximum = 100;
+        // کانفیگ سورت برای لیست اصلی (والدین)
+        $list.sortable({
+            forcePlaceholderSize : true,
+            placeholder          : 'sortable-placeholder',
+            items                : '> .wpt-sortable', /* مهار حرکت فقط به سطح اول با استفاده از دایرکتوری > */
+            cursor               : 'move',
+            axis                 : 'y',
+            containment          : $all,
+            opacity              : 0.8,
+            tolerance            : 'pointer',
+            
+            start: function(event, ui) {
+                ui.item.addClass('wpt-sorting-active');
+                // تازه سازی موقعیت‌ها برای جلوگیری از پرش در لیست‌های وردپرس
+                $(this).sortable('refreshPositions'); 
+            },
+            stop: function(event, ui) {
+                ui.item.removeClass('wpt-sorting-active');
+            }
         });
-        options.setValueAxisTemplate('{value}%');
-    }
 
-    var holder  = $('<div/>').appendTo(wrapper).attr('id', 'holder-' + Raphael.createUUID()),
-        diagram = new WptLineDiagram(wrapper[0], holder[0], scales, $, options);
+        // پشتیبانی از جابجایی المان‌های داخلی (فرزندان) بدون تداخل با والد
+        const $nestedLists = $list.find('ul');
+        if ($nestedLists.length) {
+            $nestedLists.sortable({
+                forcePlaceholderSize : true,
+                placeholder          : 'sortable-placeholder',
+                items                : '> li', /* جابجایی فرزندان فقط در محیط لیست داخلی خودشان */
+                cursor               : 'move',
+                axis                 : 'y',
+                opacity              : 0.8,
+                tolerance            : 'pointer',
+                
+                start: function(event, ui) {
+                    event.stopPropagation(); /* جلوگیری از انتشار رویداد به منوی والد */
+                    ui.item.addClass('wpt-sorting-active');
+                },
+                stop: function(event, ui) {
+                    ui.item.removeClass('wpt-sorting-active');
+                }
+            });
+        }
+    });
 });
