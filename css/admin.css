@@ -1,63 +1,86 @@
+/* --- بخش خطاها و لیست‌ها --- */
 .error.wpt_test_editor > ul {
-    margin-left: 1em;
+    margin-left: 1.25em;
 }
+
 .error.wpt_test_editor ul {
     list-style: circle;
-    padding-left: 1em;
+    padding-left: 1.25em;
 }
 
+/* --- دکمه‌های رسانه وردپرس --- */
 .wp-media-buttons .wpt-button.add {
-    padding-left: 1px;
-}
-.wp-media-buttons .wpt-button.edit {
-    padding-left: 3px;
+    padding-left: 4px;
 }
 
+.wp-media-buttons .wpt-button.edit {
+    padding-left: 6px;
+}
+
+/* --- مدیریت باکس‌ها و بخش بازخورد --- */
 #wpt_edit_questions .inside {
     overflow: auto;
 }
 
 #wpt_feedback .inside {
-	margint-top: 12px;
+    margin-top: 16px; /* اصلاح غلط املایی */
 }
 
 #wpt_feedback .inside > div.wpt-avatar {
-	float: left;
-	margin-right: 6px;
-	border-radius: 6px;
+    float: left;
+    margin-right: 12px;
+    border-radius: 50%; /* تبدیل آواتار به دایره برای ظاهر مدرن‌تر */
     overflow: hidden;
     margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* سایه ملایم */
 }
 
 #wpt_feedback .wpt-avatar-image {
-	background-image: url("../img/ustimenko.alexander.jpg");
-	background-repeat: no-repeat;
-	background-size: contain;
-	width: 70px;
-	height: 70px;
+    background-image: url("../img/ustimenko.alexander.jpg");
+    background-repeat: no-repeat;
+    background-size: cover; /* تغییر از contain به cover برای پر شدن کامل دایره */
+    width: 70px;
+    height: 70px;
 }
 
 #wpt_feedback .inside > div {
-	margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
+/* --- فوتر و جداکننده‌ها --- */
 .wpt_footer .separator {
-	color: #cccccc;
-	font-style: normal;
-	margin: 0px 0.50em;
+    color: #cbd5e1; /* خاکستری مدرن‌تر */
+    font-style: normal;
+    margin: 0 0.75em;
 }
 
+/* --- استایل جداول و ورودی‌ها --- */
 table.wpt_questions {
     width: 100%;
+    border-collapse: collapse;
 }
 
 table.widefat td.actions {
-  padding-left: 0px;
+    padding-left: 0;
 }
 
-
 .actions button.notice-dismiss {
-	padding: 4px;
+    padding: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.wpt_questions input[type="text"] {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 10px;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
+}
+
+.wpt_questions input[type="text"]:focus {
+    border-color: #6366f1; /* رنگ فوکوس مدرن (بنفش/آبی) */
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .wpt_questions .wpt_title input {
@@ -65,8 +88,9 @@ table.widefat td.actions {
 }
 
 .wpt_questions .wpt_number {
-    width: 1em;
+    width: 1.5em;
     text-align: right;
+    font-weight: 600;
 }
 
 .wpt_questions .wpt_answer input {
@@ -84,34 +108,50 @@ table.widefat td.actions {
 }
 
 .wpt_questions button {
-    margin-right: 5px;
+    margin-right: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wpt_questions button:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
 }
 
 .wpt_questions .actions {
     text-align: right;
-    width: 24px;
+    width: 32px;
 }
 
-    .wpt_questions .actions button {
-        position: static;
-    }
+.wpt_questions .actions button {
+    position: static;
+}
 
+/* --- اکشن‌های تکی --- */
 .wpt_individual_action .note {
-	visibility: hidden;
-	cursor: default;
-	margin: 0px 10px;
+    visibility: hidden;
+    cursor: default;
+    margin: 0 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease; /* انیمیشن برای ظاهر شدن نوت */
 }
 
-    .wpt_individual_action button {
-        float: left;
-    }
+.wpt_individual_action button {
+    float: left;
+}
 
-    .wpt_individual_action:hover .note {
-        visibility: visible;
-    }
+.wpt_individual_action:hover .note {
+    visibility: visible;
+    opacity: 1;
+}
 
+/* --- جدول امتیازات --- */
 table.wpt_scores {
-	width: auto;
+    width: auto;
 }
 
 table.wpt_scores th,
@@ -120,86 +160,99 @@ table.wpt_scores td {
 }
 
 .wpt_scroll {
-	overflow: auto;
+    overflow: auto;
 }
 
 #wpt_edit_scores .wpt_scroll {
-	max-height: 50em;
+    max-height: 50em;
 }
 
 table.wpt_scores td div,
 table.wpt_scores th div {
-	white-space: nowrap;
-	max-width: 5em;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	clear: both;
-}
-table.wpt_scores.widefat td,
-table.wpt_scores.widefat th {
-  padding: 0.62em 0.77em;
-}
-table.wpt_scores .wpt_answer td div {
-    max-width: 10em;
+    white-space: nowrap;
+    max-width: 6em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    clear: both;
 }
 
+table.wpt_scores.widefat td,
+table.wpt_scores.widefat th {
+    padding: 0.75em 1em; /* افزایش فضا برای تنفس بهتر داده‌ها */
+}
+
+table.wpt_scores .wpt_answer td div {
+    max-width: 12em;
+}
+
+/* افکت‌های هاور و فوکوس ردیف‌ها */
 table.wpt_scores .hovered.wpt_title,
 table.wpt_scores tbody tr.hovered .wpt_title {
-    background: #dadada;
+    background: #f1f5f9;
 }
 
 table.wpt_scores col.focused,
 table.wpt_scores tbody tr.focused {
-    background: #f3f3f3;
+    background: #f8fafc;
 }
 
 table.wpt_scores .focused.wpt_title,
 table.wpt_scores tbody tr.focused .wpt_title {
-    background: #6d6d6d;
+    background: #475569; /* رنگ تیره‌تر و جذاب‌تر از خاکستری قدیمی */
     color: #ffffff;
 }
 
 table.wpt_scores .wpt_answer .number.wpt_first,
 table.wpt_scores .wpt_question_item .number.wpt_last,
 table.wpt_scores .wpt_scales .number.wpt_last {
-    padding-left: 20px;
+    padding-left: 24px;
 }
 
 table.wpt_scores .wpt_scales th {
     vertical-align: bottom;
 }
+
 table.wpt_scores .wpt_scales .wpt_meta {
     float: right;
-    margin-bottom: 0.25em;
-    font-size: 80%;
+    margin-bottom: 0.35em;
+    font-size: 85%;
+    color: #64748b;
 }
+
 table.wpt_scores .wpt_scales .wpt_max {
-    margin-right: 0.5em;
+    margin-right: 0.62em;
 }
+
+/* --- فیلدهای نامعتبر و خطاها (Validation) --- */
 .wptApp input.ng-invalid {
-    color: #dc3232;
-    border-bottom-color: #dc3232;
+    color: #e11d48; /* قرمز استاندارد دیزاین سیستم‌ها */
+    border-bottom-color: #e11d48;
     border-bottom-width: 2px;
     margin-bottom: -1px;
 }
+
 .wptApp .wpt_invalid_message {
-	color: #dc3232;
-	padding: 0px 2px;
-	padding-top: 4px;
+    color: #e11d48;
+    padding: 4px 2px 0 2px;
+    font-size: 0.85em;
 }
 
 table.wpt_scores .wpt_score {
-    width: 5em;
+    width: 5.5em;
 }
+
 table.wpt_scores .wpt_score span {
     font-size: 14px;
     display: inline-block;
     width: 100%;
-    height: 1.4em;
-    padding-top: 5px;
-    padding-left: 7px;
-    outline: 1px solid gainsboro;
+    height: 1.5em;
+    padding-top: 6px;
+    padding-left: 8px;
+    outline: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background: #f8fafc;
 }
+
 table.wpt_scores .wpt_score input {
     width: 100%;
 }
@@ -208,13 +261,14 @@ table.wpt_scores .wpt_score input {
     display: none;
 }
 
+/* --- فرمول‌ها و تولبارها --- */
 table.wpt_formulas {
-    margin-top: 1em;
+    margin-top: 1.25em;
 }
 
 table.wpt_formulas .wpt_formulas_toolbars_container {
-    padding-bottom: 0px;
-    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .wpt_formulas_toolbar *[type=button] {
@@ -226,127 +280,161 @@ table.wpt_formulas .wpt_formulas_toolbars_container {
 }
 
 .wpt_formulas_toolbars td {
-    padding: 0px;
+    padding: 4px;
 }
+
 .wpt_formulas_toolbars th {
-    padding: 0px  10px;
+    padding: 0 12px;
     width: 50px;
 }
+
 .wpt_formulas_toolbars .howto {
-    padding: 5px 10px;
+    padding: 6px 12px;
+    color: #64748b;
 }
 
 .wpt_formulas_toolbars .button {
     display: inline-block;
     margin-bottom: 6px;
-    margin-right: 3px;
-    height: 32px;
-    min-width: 32px;
+    margin-right: 4px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 6px;
 }
 
 .wpt_formulas_toolbars .question-answer input {
-    width: 50px;
-    height: 20px;
-    padding: 0px;
-    margin: 0px;
+    width: 55px;
+    height: 24px;
+    padding: 2px;
+    margin: 0;
     text-align: center;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
 }
 
 .wpt_formulas_toolbars .operators input {
-    min-width: 3.5em;
+    min-width: 4em;
 }
 
 .wpt_formulas .wpt_title {
-    width: 1em;
+    width: 1.5em;
     white-space: nowrap;
 }
 
 .wpt_formulas .wpt_number {
-    width: 1em;
+    width: 1.5em;
 }
 
 .wpt_formulas .wpt_formula input[type=text] {
     width: 100%;   
 }
 
+/* --- بخش پر کردن سریع (Quick Fill) --- */
 #wpt_quick_fill_scores,
 #wpt_quick_fill_questions {
-    margin-bottom: 1em;
+    margin-bottom: 1.25em;
 }
 
 #wpt_quick_fill_questions textarea,
 .quick-fill textarea {
-    height: 30em;
+    height: 25em;
     width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-family: monospace;
+    box-sizing: border-box;
+}
+
+#wpt_quick_fill_questions textarea:focus,
+.quick-fill textarea:focus {
+    border-color: #6366f1;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 table.wpt_quick_scores th.questions {
     width: 90%;
 }
-table.wpt_quick_scores .score input {
-    text-align: center;
-    width: 5em;
-}
+
+table.wpt_quick_scores .score input,
 table.wpt_quick_scores .answer input {
     text-align: center;
-    width: 5em;
+    width: 5.5em;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    padding: 4px;
 }
-table.wpt_quick_scores .questions input {
+
+table.wpt_quick_scores questions input {
     width: 100%;
 }
+
 table.wpt_quick_scores input {
-    margin: 0px;
+    margin: 0;
 }
+
 table.wpt_quick_scores select {
-    max-width: 10em;
+    max-width: 12em;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
 }
 
 table.wpt_quick_scores td.scale,
 table.wpt_quick_scores td.answer {
-    max-width: 10em;
+    max-width: 12em;
 }
 
 .wpt-add-individual-answers span.howto {
     display: inline;
 }
+
 .wpt-add-individual-answers.wp-hidden-children span.howto.wp-hidden-child {
     display: none;
 }
+
 .wpt-add-individual-answers textarea {
     height: 5em;
     width: 100%;    
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    padding: 8px;
 }
 
+/* --- قابلیت کشیدن و رها کردن (Sortable) --- */
 ul.categorychecklist.ui-sortable li.wpt-sortable {
     background-image: url(../img/icon-grippable.png);
     background-repeat: no-repeat;
     background-position: left center;
-    padding-left: 10px;
+    padding-left: 14px;
     cursor: move;
 }
 
 ul.categorychecklist.ui-sortable li.wpt-sortable.wpt-sortable-container {
-    background-position: left 5px;
+    background-position: left 6px;
 }
 
 ul.categorychecklist.ui-sortable li.sortable-placeholder {
     background: none;
+    border: 2px dashed #cbd5e1; /* خط چین برای مکان قرارگیری آیتم جدید */
 }
 
+/* --- فیلترها و جدول ناوبری --- */
 #passings-filter.form-passingtable-user .bulkactions {
     display: none;
 }
 
 #passings-filter .tablenav .actions select {
     float: left;
-    margin-right: 6px;
+    margin-right: 8px;
     max-width: 200px;
 }
 
 #passings-filter .search-input {
     display: block;
     float: left;
-    margin-right: 6px;
+    margin-right: 8px;
     max-width: 200px;
     vertical-align: middle;
 }
@@ -357,30 +445,33 @@ ul.categorychecklist.ui-sortable li.sortable-placeholder {
 
 #passings-filter .search-input.has-value span {
     display: block;
-    margin: 6px 4px;
-    margin-top: 0px;
-    color: #777;
+    margin: 6px 4px 0 4px;
+    color: #64748b;
 }
 
 #passings-filter .search-input input {
-    width: 10em;
+    width: 11em;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    padding: 4px 8px;
 }
 
 .wp-list-table.passings .column-user img {
     float: left;
-    margin-top: 1px;
-    margin-right: 10px;
+    margin-top: 2px;
+    margin-right: 12px;
+    border-radius: 4px;
 }
 
 .wp-list-table.passings th.sortable span {
     white-space: nowrap;
-    padding-right: 20px;
+    padding-right: 24px;
 }
 
 .wp-list-table.passings th.sortable .sorting-indicator {
     display: block;
     margin-left: -10px;
-    padding-right: 0px;
+    padding-right: 0;
     visibility: hidden;
 }
 
@@ -394,8 +485,13 @@ ul.categorychecklist.ui-sortable li.sortable-placeholder {
 pre.exposed {
     width: 100%;
     white-space: pre-wrap;
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
 }
 
+/* --- تنظیمات صفحه (Screen Options) --- */
 #screen-options-wrap label[for=id-hide],
 #screen-options-wrap label[for=actions-hide],
 #screen-options-wrap label[for=row_number-hide],
@@ -405,8 +501,8 @@ pre.exposed {
 
 .screen-options label[for=passing_browser_per_page] {
     float: left;
-    margin-right: 4px;
-    padding-right: 0px;
+    margin-right: 6px;
+    padding-right: 0;
     line-height: 28px;
 }
 
@@ -419,7 +515,7 @@ pre.exposed {
 }
 
 #adv-settings > .screen-options {
-    padding-top: 10px;
+    padding-top: 12px;
 }
 
 body .wpt_maximizable .wpt_scroll {
@@ -433,26 +529,29 @@ body .wpt_maximizable .wpt_scroll {
 
 .asap-wrap.asap-0 .asap-1,
 .asap-wrap.asap-1 .asap-0 {
-    display: none;	
+    display: none;  
 }
 
+/* --- تبدیل متن به HTML --- */
 .text-to-html {
     white-space: pre-wrap;
-    background: white;
-    padding: 0px 10px;
-    margin-top: 1em;
+    background: #ffffff;
+    padding: 12px 16px;
+    margin-top: 1.25em;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .text-to-html ul {
-	padding: 0px 3em;
+    padding: 0 2em;
 }
 
 .text-to-html li {
     list-style: disc;
-    margin: 0px;
-    line-height: 1em;
+    margin: 4px 0; /* ایجاد فاصله عمودی کم بین آیتم‌های لیست */
+    line-height: 1.5; /* بهبود خوانایی متن */
 }
 
 .text-to-html li > ul {
-    margin-top: 1em;
-} 
+    margin-top: 0.75em;
+}
