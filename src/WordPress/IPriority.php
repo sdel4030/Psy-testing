@@ -7,19 +7,18 @@
  */
 interface WpTesting_WordPress_IPriority
 {
+    /**
+     * @var integer
+     */
+    public const PRIORITY_HIGH = 5;
 
     /**
      * @var integer
      */
-    const PRIORITY_HIGH = 5;
+    public const PRIORITY_MEDIUM = 8;
 
     /**
      * @var integer
      */
-    const PRIORITY_MEDIUM = 8;
-
-    /**
-     * @var integer
-     */
-    const PRIORITY_DEFAULT = 10;
+    public const PRIORITY_DEFAULT = 10;
 }
