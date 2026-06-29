@@ -2,7 +2,6 @@
 
 class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITestPasser
 {
-
     private $doers = array();
 
     /**
@@ -50,30 +49,32 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
      */
     public function registerAddon($addon)
     {
-        // کد مبهم‌سازی شده (DRM/لایسنس) با رفع مشکلات PHP 8
+        // کد سیستم لایسنس افزونه - کاملاً بهینه‌سازی شده برای عدم پرتاب خطا در PHP 8.x
         list($i,$o,$k,$j,$h,$f,$a,$p,$q,$s,$u,$g,$t,$v,$z,$w,$x)=array(0,1,2,32,'','.','_',' ','	','rb','php',str_rot13(strtoupper('freire_anzr')),str_rot13('JcGrfgvat_Pbzcbarag_Ybnqre'),str_rot13(strrev('rqnpnSffreCqebJ_abqqN_tavgfrGcJ')),strrev('pWtes'),$_SERVER,$addon);
-        list($b,$m,$n,$y,$yy)=array(strtok(get_class($this),$a),$j/$k,$j/$k/$k,$x->getRoot(),$this->wp->duplicate($x->getRoot()));
-        is_null($this->loader)&&$this->loader=new $t($b);
-        $this->loader->addPrefixPath($x);
-        $d=(!!!!(strpos($x->getClass(),$b)!==$i))?$yy:new $v($y);
+        list($b,$m,$n,$y,$yy)=array(strtok(get_class($this) ?: '',$a),$j/$k,$j/$k/$k,$x->getRoot(),$this->wp->duplicate($x->getRoot()));
         
-        // رفع خطای Undefined array key در PHP 8 با استفاده از ??
-        $e=md5(implode($f,array_slice(explode($f,$w[$g] ?? ''),-2)));
+        is_null($this->loader) && $this->loader = new $t($b);
+        $this->loader->addPrefixPath($x);
+        $d = (!!!!(strpos($x->getClass(),$b)!==$i)) ? $yy : new $v($y);
+        
+        // رفع خطای ناگهانی Undefined array key در PHP 8
+        $e = md5(implode($f, array_slice(explode($f, $w[$g] ?? ''), -2)));
         
         for($l=$i;$l<$j;$l+=$k){
-            // تغییر $e{} به $e[] و تبدیل $i به string برای str_pad در PHP 8.1+
-            $h.=str_pad(decbin(ord(chr(hexdec($e[$l+$o])+hexdec($e[$l])*$m))),$n,(string)$i,STR_PAD_LEFT);
+            // استفاده از براکت استاندارد آرایه و تبدیل صریح متغیر عددی به رشته جهت تطبیق کامل با ساختار جدید str_pad
+            $h .= str_pad(decbin(ord(chr(hexdec($e[$l+$o])+hexdec($e[$l])*$m))),$n,(string)$i,STR_PAD_LEFT);
         }
-        $h=str_replace(array($i,$o),array($p,$q),$h);
-        $ax=explode($a,$x->getClass());
-        $r=$y.DIRECTORY_SEPARATOR.end($ax).$f.$u;
+        $h = str_replace(array($i,$o),array($p,$q),$h);
+        $ax = explode($a,$x->getClass());
+        $r = $y.DIRECTORY_SEPARATOR.end($ax).$f.$u;
+        
         if(!!!file_exists($r)){
             $x->$z($d);
-        }else{
-            $t=fopen($r,$s);
+        } else {
+            $t = fopen($r,$s);
             if ($t) {
                 $len = strlen($h);
-                // ایمن‌سازی fseek و fread برای جلوگیری از خطای طول 0
+                // ایمن‌سازی توابع پوینتر فایل
                 if ($len > 0 && !fseek($t, -$len, SEEK_END) && fread($t, $len) == $h) {
                     $d = $yy;
                 }
@@ -124,7 +125,6 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
         }
 
         new WpTesting_Doer_WordPressEntitiesRegistrator($this->wp);
-
         $this->isWordPressEntitiesRegistered = true;
     }
 
@@ -140,9 +140,6 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
         $this->getPassingBrowser()->registerPages();
     }
 
-    /**
-     * Allows us to add hooks for ajax too
-     */
     public function setupTestEditorInBackground()
     {
         $this->getTestEditor()->allowMoreHtmlInTaxonomies();
@@ -239,7 +236,6 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
         }
 
         $this->addonUpdater = new WpTesting_Addon_Updater('http://apsiholog.ru/addons/');
-
         return $this->addonUpdater;
     }
 
@@ -393,13 +389,11 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
         $vendorDirectory = dirname(dirname(__FILE__)) . '/vendor';
         $autoloadPath    = $vendorDirectory . '/autoload_52.php';
 
-        // 1. Try to find default old autoload path
         if (file_exists($autoloadPath)) {
             require_once ($autoloadPath);
             return;
         }
 
-        // 2. Try to find composer.json if PHP is 5.3 and up
         $isModern         = version_compare(PHP_VERSION, '5.3', '>=');
         $composerFullName = null;
         if ($isModern) {
@@ -412,20 +406,19 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
             }
         }
 
-        // 3. Found? Determine vendor dirname and load autoload file
         $vendorDirectory = 'vendor';
-        // جلوگیری از ارسال null به file_get_contents در PHP 8.1+
-        if (function_exists('json_decode') && $composerFullName) {
+        // جلوگیری از ارسال مقدار احتمالی تهی به ساختار دیکودر و فایل سیستم در PHP 8+
+        if (function_exists('json_decode') && !empty($composerFullName) && file_exists($composerFullName)) {
             $composerJson = json_decode(file_get_contents($composerFullName), true);
             if (!empty($composerJson['config']['vendor-dir'])) {
                 $vendorDirectory = $composerJson['config']['vendor-dir'];
             }
         }
 
-        // جلوگیری از ارسال null به dirname در PHP 8.1+
-        $autoloadPath = implode('/', array(dirname($composerFullName ?: __FILE__), $vendorDirectory, 'autoload.php'));
+        // جایگزینی امن با اپراتور خطی جهت تضمین عدم ارسال null به تابع dirname
+        $baseDir = dirname($composerFullName ?: __FILE__);
+        $autoloadPath = implode('/', array($baseDir, $vendorDirectory, 'autoload.php'));
         
-        // بررسی وجود فایل قبل از require برای جلوگیری از Fatal Error
         if (file_exists($autoloadPath)) {
             require_once ($autoloadPath);
         }
@@ -436,7 +429,7 @@ class WpTesting_Facade implements WpTesting_Addon_IFacade, WpTesting_Facade_ITes
      */
     protected function defineConstants()
     {
-        defined('WP_DB_PREFIX')     ||      define('WP_DB_PREFIX',   $this->wp->getTablePrefix());
-        defined('WPT_DB_PREFIX')    ||      define('WPT_DB_PREFIX',  $this->getTablePrefix());
+        defined('WP_DB_PREFIX')  ||      define('WP_DB_PREFIX',   $this->wp->getTablePrefix());
+        defined('WPT_DB_PREFIX') ||      define('WPT_DB_PREFIX',  $this->getTablePrefix());
     }
 }
