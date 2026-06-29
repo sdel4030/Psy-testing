@@ -1,13 +1,20 @@
+/* --- مدیریت بدنه سایت در حالت بزرگ‌نمایی --- */
 body.wpt_maximize {
-    overflow: hidden;
+    overflow: hidden !important; /* جلوگیری قطعی از اسکرول خوردن کل صفحه */
 }
 
-body.wpt_maximize #wpadminbar, body.wpt_maximize #postdivrich, body.wpt_maximize #adminmenumain {
+/* مخفی کردن المان‌های مزاحم وردپرس با انیمیشن محو شدن ملایم */
+body.wpt_maximize #wpadminbar, 
+body.wpt_maximize #postdivrich, 
+body.wpt_maximize #adminmenumain {
     display: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
 }
 
+/* --- تنظیمات اسکرول باکس‌ها --- */
 body.wpt_maximize .wpt_maximizable .wpt_scroll {
-    overflow: scroll;
+    overflow: auto; /* تبدیل scroll به auto برای ظاهر زیباتر اسکرول‌بار در مرورگرها */
 }
 
 body.wpt_maximize .wpt_maximizable.wpt_maximized .wpt_scroll {
@@ -15,31 +22,55 @@ body.wpt_maximize .wpt_maximizable.wpt_maximized .wpt_scroll {
     max-height: none;
 }
 
+/* --- استایل اصلی باکس ماکسیمایز شده --- */
 body.wpt_maximize .wpt_maximized {
     position: fixed;
     width: 100%;
     height: 100%;
     left: 0;
     top: 0;
-    z-index: 99;
+    z-index: 99999; /* افزایش برای قرارگیری مطمئن روی تمام المان‌های پوسته */
+    background-color: #f0f0f1; /* رنگ بک‌گراند استاندارد ادمین وردپرس جهت حفظ یکپارچگی */
     overflow: auto;
+    padding: 20px; /* ایجاد یک فضای تنفس (Padding) در اطراف باکس تمام‌صفحه */
+    box-sizing: border-box;
+    animation: wptFadeIn 0.2s ease-out; /* اجرای انیمیشن ملایم هنگام باز شدن */
 }
 
+/* --- لینک‌ها و دکمه‌ها --- */
 .wpt_maximizable .qt-dfw {
     position: static;
 }
 
 .wpt_maximizable .button-link {
-	text-decoration: none;
+    text-decoration: none;
+    transition: color 0.2s ease;
 }
 
-/* Old WP versions */
+.wpt_maximizable .button-link:hover {
+    color: #2271b1; /* رنگ آبی هاور استاندارد وردپرس */
+}
+
+/* --- سازگاری با نسخه‌های قدیمی وردپرس (پوسته TinyMCE) --- */
 .wpt_maximizable .wp_themeSkin {
-    padding: 0px;
+    padding: 0;
     background: none;
     border: none;
     outline: none;
 }
+
 .wpt_maximizable .wp_themeSkin .mceIcon {
     margin: auto;
+}
+
+/* --- انیمیشن ورود برای حس روان‌تر (UX) --- */
+@keyframes wptFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
