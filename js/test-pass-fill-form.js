@@ -1,26 +1,16 @@
+/**
+ * Optimized & Modernized Core Quiz Engine for WordPress 7+
+ * Cleansed from deprecated Webshim/Evercookie & fixed .prop() bugs.
+ */
+
 var Wpt = Wpt || {};
 Wpt.form = Wpt.form || {};
 
+// حذف نیازمندی به Webshim؛ چرا که مرورگرهای مدرن به طور بومی از HTML5 Validation پشتیبانی می‌کنند.
 Wpt.initWebshim = function(baseUrl) {
-    if (this.initialized || typeof webshim === 'undefined') {
-        return;
-    }
+    if (this.initialized) return;
     this.initialized = true;
-    webshim.setOptions({
-        waitReady : true,
-        basePath  : baseUrl,
-        forms     : {
-            replaceValidationUI: true,
-            messagePopover: {
-                position: {
-                    at: 'top',
-                    my: 'bottom',
-                    collision: 'flipfit'
-                }
-            }
-        }
-    });
-    webshims.polyfill('forms forms-ext');
+    console.log('Wpt: Using native browser form validation.');
 };
 
 if (Wpt.webshimBaseurl) {
@@ -29,7 +19,7 @@ if (Wpt.webshimBaseurl) {
 
 jQuery(document).ready(function($) {
     Wpt.initWebshim(Wpt.webshimBaseurl);
-    Wpt.initEvercookie();
+    Wpt.initDeviceIdentifier(); // جایگزین بهینه برای evercookie
 
     $('.wpt_test_form').each(function(i, formEl) {
         var form = $(formEl);
@@ -43,100 +33,87 @@ jQuery(document).ready(function($) {
 });
 
 Wpt.form.initQuestionAnswered = function(form) {
-    form.bind('question_answered_initially.wpt', function(event, question) {
+    form.on('question_answered_initially.wpt', function(event, question) {
         question.addClass('answered');
         question.find('.answer input:first').removeAttr('required').removeAttr('aria-required');
-    }).bind('question_unanswered_initially.wpt', function(event, question) {
+    }).on('question_unanswered_initially.wpt', function(event, question) {
         question.removeClass('answered');
-        question.find('.answer input:first').attr('required', 'required').attr('aria-required', 'true');
-    }).bind('answer_selected.wpt', function (event, answer) {
+        question.find('.answer input:first').attr({ 'required': 'required', 'aria-required': 'true' });
+    }).on('answer_selected.wpt', function (event, answer) {
         answer.addClass('selected');
-    }).bind('answer_unselected.wpt', function (event, answer) {
+    }).on('answer_unselected.wpt', function (event, answer) {
         answer.removeClass('selected');
     });
 };
 
-Wpt.initEvercookie = function() {
-    if (typeof evercookie === 'undefined') {
-        return;
+// پیاده‌سازی شناسه یکتا برای کاربر با استفاده از متد استاندارد و پرسرعت LocalStorage
+Wpt.initDeviceIdentifier = function() {
+    try {
+        if (!localStorage.getItem('wpt_device_uuid')) {
+            // ایجاد یک UUID ساده و تصادفی در صورت عدم وجود ساختار پیچیده uuid.v4
+            var uuidStr = (typeof uuid !== 'undefined') ? uuid.v4() : 'wpt-' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('wpt_device_uuid', uuidStr);
+        }
+    } catch (e) {
+        console.warn('LocalStorage is disabled or not supported.');
     }
-
-    var ec = new evercookie({
-        tests           : 3,
-        baseurl         : Wpt.evercookieBaseurl,
-        history         : false,
-        silverlight     : false,
-        java            : false,
-        pngCookieName   : 'wpt_ec_png_device_uuid',
-        etagCookieName  : 'wpt_ec_etag_device_uuid',
-        cacheCookieName : 'wpt_ec_cache_device_uuid'
-    });
-    ec.get('device_uuid', function(best) {
-        ec.set('device_uuid', best || uuid.v4());
-    }, 1);
 };
 
 Wpt.form.setupSubmitDisable = function(form) {
     var button = form.find('.button');
 
-    form.bind('test_filled.wpt', function() {
-        button.removeClass('disabled');
-    }).bind('test_unfilled.wpt', function() {
-        button.addClass('disabled');
+    form.on('test_filled.wpt', function() {
+        button.removeClass('disabled').prop('disabled', false);
+    }).on('test_unfilled.wpt', function() {
+        button.addClass('disabled').prop('disabled', true);
     });
 };
 
 Wpt.form.setupResetAnswers = function(form) {
-    if (!form.data('settings').isResetAnswersOnBack) {
+    var settings = form.data('settings');
+    if (!settings || !settings.isResetAnswersOnBack) {
         return;
     }
-    form.bind('init_answers.wpt', function(event, answersInputs) {
-        answersInputs.attr('checked', false);
+    form.on('init_answers.wpt', function(event, answersInputs) {
+        answersInputs.prop('checked', false); // اصلاح اصولی با prop
     });
 };
 
 Wpt.form.setupProgressMeter = function($, form) {
-    if (!form.data('settings').isShowProgressMeter) {
+    var settings = form.data('settings');
+    if (!settings || !settings.isShowProgressMeter) {
         return;
     }
 
     var initialTitle = document.title,
-        separator    = Wpt.titleSeparator,
-        template     = Wpt.percentsAnswered;
+        separator    = Wpt.titleSeparator || ' | ',
+        template     = Wpt.percentsAnswered || '{percentage}%';
 
-    $(document).bind('percentage_change.wpt', function(event, percent) {
-        document.title = template.replace('{percentage}', percent) +  ' ' + separator + ' ' + initialTitle;
+    $(document).on('percentage_change.wpt', function(event, percent) {
+        document.title = template.replace('{percentage}', percent) + ' ' + separator + ' ' + initialTitle;
     });
 };
 
 Wpt.form.setupQuestionsAnswered = function($, form) {
-    var questionsAnswered  = form.data('questions').answered,
+    var questionData = form.data('questions') || { answered: 0, total: 0 };
+    var questionsAnswered  = questionData.answered,
         questions          = form.find('.question'),
         questionsMinFilled = questionsAnswered + questions.length,
-        questionsTotal     = form.data('questions').total;
+        questionsTotal     = questionData.total;
 
-    var answersInputs = form.find('input:radio,input:checkbox');
-    form.trigger('init_answers.wpt', [answersInputs])
-        .trigger('test_unfilled.wpt');
+    var answersInputs = form.find('input:radio, input:checkbox');
+    form.trigger('init_answers.wpt', [answersInputs]).trigger('test_unfilled.wpt');
 
+    // بهینه‌سازی تابع جایگزینی پلیس‌هولدر متن سوالات
     function replacePlaceholdersIn(el) {
-        var NODE_TEXT_NODE = 3,
-            RE_PLACEHOLDER = /(_{2,})/g;
-
-        el.add(el.children()).contents().filter(function() {
-            var isText = (this.nodeType == NODE_TEXT_NODE);
-
-            if (!isText) {
-                return false;
+        var RE_PLACEHOLDER = /(_{2,})/g;
+        el.add(el.children()).contents().each(function() {
+            if (this.nodeType === 3 && RE_PLACEHOLDER.test($(this).text())) {
+                $(this).replaceWith($(this).text().replace(RE_PLACEHOLDER, '<span class="placeholder">$1</span>'));
             }
-
-            return RE_PLACEHOLDER.test($(this).text());
-        }).replaceWith(function() {
-            return $(this).text().replace(RE_PLACEHOLDER, '<span class="placeholder">$1</span>');
         });
-
         return el;
-    };
+    }
 
     form.find('.question').each(function () {
         var question = $(this),
@@ -147,55 +124,66 @@ Wpt.form.setupQuestionsAnswered = function($, form) {
 
         question.data('isAnswered', false);
         var questionAnswersInputs = question.find('.answer input');
+
         question.find('.answer').each(function () {
             var answer = $(this);
-            answer.find('input').bind('change', function () {
-                answer.data('isSelected', !!$(this).attr('checked'));
-                if (answer.data('isSelected')) {
+            
+            answer.find('input').on('change', function () {
+                // اصلاح کلیدی: جایگزینی .attr() با .prop() جهت کارکرد صحیح در وردپرس جدید
+                var isChecked = $(this).prop('checked');
+                answer.data('isSelected', isChecked);
+
+                if (isChecked) {
                     form.trigger('answer_selected.wpt', [answer]);
-                    questionAnswersInputs.each(function (i, otherInput) {
-                        var $el = $(otherInput);
-                        if ($el.closest('.answer').data('isSelected') != !!$(otherInput).attr('checked')) {
-                            $el.change();
-                        }
-                    });
+                    
+                    // اگر دکمه رادیویی است، بقیه گزینه‌های این سوال را از حالت انتخاب کلاس خارج کن
+                    if ($(this).is(':radio')) {
+                        question.find('.answer').not(answer).each(function() {
+                            var $otherAnswer = $(this);
+                            if ($otherAnswer.data('isSelected')) {
+                                $otherAnswer.data('isSelected', false);
+                                form.trigger('answer_unselected.wpt', [$otherAnswer]);
+                            }
+                        });
+                    }
                 } else {
                     form.trigger('answer_unselected.wpt', [answer]);
                 }
-                if (!answer.data('isSelected')) {
-                    var isAllCheckboxesEmpty = (0 == questionAnswersInputs.filter(':checked').length);
-                    if (isAllCheckboxesEmpty) {
-                        question.data('isAnswered', false);
-                        questionsAnswered--;
-                        form.trigger('question_unanswered_initially.wpt', [question, questionsAnswered, questionsTotal, questionsMinFilled]);
-                        form.trigger('question_unanswered.wpt', [question, answer, placeholder]);
-                    }
-                    return;
-                }
-                if (!question.data('isAnswered')) {
+
+                var currentCheckedCount = questionAnswersInputs.filter(':checked').length;
+
+                if (currentCheckedCount === 0 && question.data('isAnswered')) {
+                    question.data('isAnswered', false);
+                    questionsAnswered--;
+                    form.trigger('question_unanswered_initially.wpt', [question, questionsAnswered, questionsTotal, questionsMinFilled]);
+                    form.trigger('question_unanswered.wpt', [question, answer, placeholder]);
+                } else if (currentCheckedCount > 0 && !question.data('isAnswered')) {
                     question.data('isAnswered', true);
                     questionsAnswered++;
                     form.trigger('question_answered_initially.wpt', [question, questionsAnswered, questionsTotal, questionsMinFilled]);
+                    form.trigger('question_answered.wpt', [question, answer, placeholder]);
                 }
-                form.trigger('question_answered.wpt', [question, answer, placeholder]);
             });
         });
     });
 
     function calculateAnswersPercentage(event, question, answered, total, minFilled) {
-        var percent = Math.round(100 * (answered / total));
+        var percent = total > 0 ? Math.round(100 * (answered / total)) : 0;
         $(document).trigger('percentage_change.wpt', [percent]);
-        if (answered == minFilled) {
+        if (answered >= minFilled) {
             form.trigger('test_filled.wpt');
         } else {
             form.trigger('test_unfilled.wpt');
         }
-    };
-    form.bind('question_answered_initially.wpt',   calculateAnswersPercentage)
-        .bind('question_unanswered_initially.wpt', calculateAnswersPercentage);
+    }
+
+    form.on('question_answered_initially.wpt',   calculateAnswersPercentage)
+        .on('question_unanswered_initially.wpt', calculateAnswersPercentage);
 
     if (questionsAnswered > 0) {
         calculateAnswersPercentage({}, form.find('.question:first'), questionsAnswered, questionsTotal, questionsMinFilled);
     }
-    answersInputs.filter(':checked').change();
+    
+    // اجرای تغییر اولیه بر اساس دکمه‌های از قبل پر شده به روش استاندارد
+    answersInputs.filter(':checked').trigger('change');
 };
