@@ -2,27 +2,30 @@
 
 /**
  * Parse database host/port/socket from DB_HOST format.
+ * Fully optimized for PHP 8+ strict type matching.
  */
 class WpTesting_WordPress_Value_DbHost extends WpTesting_WordPress_Value_Base
 {
-    private $host;
-    private $port;
-    private $socket;
+    private $host = null;
+    private $port = null;
+    private $socket = null;
 
     public function __construct($value)
     {
-        parent::__construct($value);
+        // تبدیل ورودی به رشته برای جلوگیری از خطاهای نوع داده در PHP 8+
+        $stringValue = (string)$value;
+        parent::__construct($stringValue);
 
         // First peel off the socket parameter from the right, if it exists.
-        $socketPosition = strpos($value, ':/' );
+        $socketPosition = strpos($stringValue, ':/' );
         if ($socketPosition !== false) {
-            $this->socket = substr($value, $socketPosition + 1);
-            $value = substr($value, 0, $socketPosition);
+            $this->socket = substr($stringValue, $socketPosition + 1);
+            $stringValue = substr($stringValue, 0, $socketPosition);
         }
 
         // We need to check for an IPv6 address first.
         // An IPv6 address will always contain at least two colons.
-        $isIpv6 = (substr_count($value, ':') > 1);
+        $isIpv6 = (substr_count($stringValue, ':') > 1);
 
         if ($isIpv6) {
             $pattern = '#^(?:\[)?(?<host>[0-9a-fA-F:]+)(?:\]:(?<port>[\d]+))?#';
@@ -31,7 +34,7 @@ class WpTesting_WordPress_Value_DbHost extends WpTesting_WordPress_Value_Base
         }
 
         $matches = array();
-        $result = preg_match($pattern, $value, $matches);
+        preg_match($pattern, $stringValue, $matches);
 
         if (!empty($matches['host'])) {
             $this->host = $matches['host'];
@@ -40,12 +43,12 @@ class WpTesting_WordPress_Value_DbHost extends WpTesting_WordPress_Value_Base
             }
         }
         if (!empty($matches['port'])) {
-            $this->port = $matches['port'];
+            $this->port = (int)$matches['port'];
         }
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function host()
     {
@@ -53,7 +56,7 @@ class WpTesting_WordPress_Value_DbHost extends WpTesting_WordPress_Value_Base
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function port()
     {
@@ -61,7 +64,7 @@ class WpTesting_WordPress_Value_DbHost extends WpTesting_WordPress_Value_Base
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function socket()
     {
