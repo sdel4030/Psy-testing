@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Facade into wordpress
+ * Facade into WordPress
+ * Optimized for PHP 8.x and WordPress 7+ (Part 1)
  */
 class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 {
-
     /**
      * Plugin filename (required for hooks)
-     * @var string
+     * @var string|null
      */
     private $pluginFile = null;
 
@@ -21,7 +21,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     }
 
     /**
-     * Creates
+     * Creates a duplicate instance
      * @param string $pluginFile
      * @return WpTesting_WordPressFacade
      */
@@ -36,7 +36,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getDbHost()
     {
-        return DB_HOST;
+        return defined('DB_HOST') ? DB_HOST : '';
     }
 
     /**
@@ -44,7 +44,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getDbName()
     {
-        return DB_NAME;
+        return defined('DB_NAME') ? DB_NAME : '';
     }
 
     /**
@@ -52,7 +52,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getDbUser()
     {
-        return DB_USER;
+        return defined('DB_USER') ? DB_USER : '';
     }
 
     /**
@@ -60,7 +60,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getDbPassword()
     {
-        return DB_PASSWORD;
+        return defined('DB_PASSWORD') ? DB_PASSWORD : '';
     }
 
     /**
@@ -68,7 +68,10 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     private function getDb()
     {
-        require_wp_db();
+        // در لایه‌های مدرن وردپرس، نیاز به فراخوانی مکرر require_wp_db نیست مگر در لودهای بسیار زودهنگام
+        if (!isset($GLOBALS['wpdb']) && function_exists('require_wp_db')) {
+            require_wp_db();
+        }
         return $GLOBALS['wpdb'];
     }
 
@@ -87,7 +90,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getTablePrefix()
     {
-        return $GLOBALS['table_prefix'];
+        return $GLOBALS['table_prefix'] ?? 'wp_';
     }
 
     /**
@@ -95,7 +98,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getDbCharset()
     {
-        return DB_CHARSET;
+        return defined('DB_CHARSET') ? DB_CHARSET : 'utf8mb4';
     }
 
     /**
@@ -103,7 +106,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getAbsPath()
     {
-        return ABSPATH;
+        return defined('ABSPATH') ? ABSPATH : '';
     }
 
     /**
@@ -111,7 +114,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getPluginDir()
     {
-        return WP_PLUGIN_DIR;
+        return defined('WP_PLUGIN_DIR') ? WP_PLUGIN_DIR : '';
     }
 
     /**
@@ -127,7 +130,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getContentDir()
     {
-        return WP_CONTENT_DIR;
+        return defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : '';
     }
 
     /**
@@ -140,45 +143,33 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Holds the WordPress Rewrite object for creating pretty URLs
-     *
-     * @since 1.5.0
-     * @return WP_Rewrite
+     * @return WP_Rewrite|null
      */
     public function getRewrite()
     {
-        return $GLOBALS['wp_rewrite'];
+        return $GLOBALS['wp_rewrite'] ?? null;
     }
 
     /**
      * WordPress Object
-     * @global object $wp
-     * @since 2.0.0
-     * @return WP
+     * @return WP|null
      */
     public function getWP()
     {
-        return $GLOBALS['wp'];
+        return $GLOBALS['wp'] ?? null;
     }
 
     /**
      * Main WordPress Query
-     *
-     * @since 1.5.0
-     *
-     * @return WP_Query
+     * @return WP_Query|null
      */
     public function getMainQuery()
     {
-        return $GLOBALS['wp_the_query'];
+        return $GLOBALS['wp_the_query'] ?? null;
     }
 
     /**
      * Is passed query the main query?
-     *
-     * Backward compatible check instead of WP_Query::is_main_query, which is available since 3.3
-     *
-     * @since 1.5.0
-     *
      * @param WP_Query $query
      * @return boolean
      */
@@ -189,27 +180,15 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Current WordPress Query
-     *
-     * Usually it's a link to "Main WordPress Query"
-     *
-     * @since 1.5.0
-     * @see WpTesting_WordPressFacade::getMainQuery
-     *
-     * @return WP_Query
+     * @return WP_Query|null
      */
     public function getQuery()
     {
-        return $GLOBALS['wp_query'];
+        return $GLOBALS['wp_query'] ?? null;
     }
 
     /**
      * Removes an item or list from the query string.
-     *
-     * @since 1.5.0
-     *
-     * @param string|array $argument   Query key or keys to remove.
-     * @param bool|string  $uri Optional. When false uses the $_SERVER value. Default false.
-     * @return string New URL query string.
      */
     public function removeQueryArgument($argument, $uri = false)
     {
@@ -218,12 +197,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve referer from '_wp_http_referer' or HTTP referer.
-     *
-     * If it's the same as the current request URL, will return false.
-     *
-     * @since 2.0.4
-     *
-     * @return boolean|string False on failure. Referer URL on success.
      */
     public function getReferer()
     {
@@ -231,15 +204,17 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     }
 
     /**
-     * Retrieve the ID of the current post
-     *
-     * @since 2.1.0
+     * Retrieve the ID of the current post (Fully Safeguarded for PHP 8+)
      * @return integer
      */
     public function getCurrentPostId()
     {
-        // رفع خطای Attempt to read property "ID" on null در PHP 8
-        return isset($GLOBALS['post']->ID) ? (int) $GLOBALS['post']->ID : 0;
+        if (isset($GLOBALS['post']) && $GLOBALS['post'] instanceof WP_Post) {
+            return (int) $GLOBALS['post']->ID;
+        }
+        
+        // بک‌آپ بومی وردپرس در صورتی که متغیر گلوبال در آن لحظه ست نشده باشد
+        return function_exists('get_the_ID') ? (int) get_the_ID() : 0;
     }
 
     /**
@@ -252,15 +227,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve a post status object by name.
-     *
-     * @since 3.0.0
-     *
-     * @global array $wp_post_statuses List of post statuses.
-     *
-     * @see register_post_status()
-     *
-     * @param string $postStatus The name of a registered post status.
-     * @return object A post status object.
      */
     public function getPostStatusObject($postStatus)
     {
@@ -285,8 +251,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Get the current user's ID
-     *
-     * @return int The current user's ID or zero
      */
     public function getCurrentUserId()
     {
@@ -295,11 +259,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Whether current user has capability or role.
-     *
-     * @since 2.0.0
-     *
-     * @param string $capability Capability or role name.
-     * @return bool
      */
     public function isCurrentUserCan($capability)
     {
@@ -308,11 +267,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve user info by user ID.
-     *
-     * @since 0.71
-     *
-     * @param int $userId User ID
-     * @return WP_User|bool WP_User object on success, false on failure.
      */
     public function getUserdata($userId)
     {
@@ -321,15 +275,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve user meta field for a user.
-     *
-     * @since 3.0.0
-     * @link https://codex.wordpress.org/Function_Reference/get_user_meta
-     *
-     * @param int $userId User ID.
-     * @param string $key Optional. The meta key to retrieve. By default, returns data for all keys.
-     * @param bool $isSingle Whether to return a single value.
-     * @return mixed Will be an array if $single is false. Will be value of meta data field if $single
-     *  is true.
      */
     public function getUserMeta($userId, $key = '', $isSingle = false)
     {
@@ -337,15 +282,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     }
 
     /**
-     * Retrieve the avatar for a user who provided a user ID or email address.
-     *
-     * @since 2.5.0
-     *
-     * @param int|string|object $idOrEmail A user ID,  email address, or comment object
-     * @param int $size Size of the avatar image
-     * @param string $default URL to a default image to use if no avatar is available
-     * @param string $alt Alternative text to use in image tag. Defaults to blank
-     * @return false|string `<img>` tag for the user's avatar.
+     * Retrieve the avatar for a user.
      */
     public function getAvatar($idOrEmail, $size = 96, $default = '', $alt = false)
     {
@@ -354,11 +291,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve edit user link
-     *
-     * @since 3.5.0
-     *
-     * @param integer|null $userId Optional. User ID. Defaults to the current user.
-     * @return string URL to edit user page or empty string.
      */
     public function getEditUserLink($userId = null)
     {
@@ -376,7 +308,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
         }
 
         $user = $this->getUserdata($userId);
-        if (!$user) {
+        if (!$user || !isset($user->ID)) {
             return '';
         }
 
@@ -386,17 +318,15 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
             $link = add_query_arg('user_id', $user->ID, self_admin_url('user-edit.php'));
         }
 
-        return $this->applyFilters('get_edit_user_link', $link, $user->ID);
-    }
-
-    /**
+        // بررسی وجود متد اختیاری فیلترها جهت جلوگیری از خطا در پارت‌های جلوتر
+        return method_exists($this, 'applyFilters') 
+            ? $this->applyFilters('get_edit_user_link', $link, $user->ID)
+            : apply_filters('get_edit_user_link', $link, $user->ID);
+    }/**
      * Retrieves the URL to the admin area for the current site.
      *
-     * @since 2.6.0
-     *
      * @param string $path   Optional path relative to the admin URL.
-     * @param string $scheme The scheme to use. Default is 'admin', which obeys force_ssl_admin() and is_ssl().
-     *                       'http' or 'https' can be passed to force those schemes.
+     * @param string $scheme The scheme to use.
      * @return string Admin URL link with optional path appended.
      */
     public function adminUrl($path = '', $scheme = 'admin')
@@ -408,7 +338,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      * Sets admin page title.
      *
      * @param string $title
-     *
      * @return void
      */
     public function setAdminPageTitle($title)
@@ -423,17 +352,14 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getVersion()
     {
-        return $GLOBALS['wp_version'];
+        return $GLOBALS['wp_version'] ?? '7.0.0';
     }
 
     /**
      * Retrieve a URL within the plugin
      *
-     * @since 2.6.0
-     *
-     * @param  string $pluginRelatedPath Optional. Extra path appended to the end of the URL, including
-     *                                    the relative directory. Default empty.
-     * @return string Plugin URL link with optional paths appended.
+     * @param string $pluginRelatedPath
+     * @return string
      */
     public function getPluginUrl($pluginRelatedPath = '')
     {
@@ -443,12 +369,8 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     /**
      * Gets the basename of a plugin.
      *
-     * This method extracts the name of a plugin from its filename.
-     *
-     * @since 1.5
-     *
-     * @param string $file The filename of plugin.
-     * @return string The name of a plugin.
+     * @param string|null $file
+     * @return string
      */
     public function getPluginBaseName($file = null)
     {
@@ -461,41 +383,19 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     /**
      * Check the plugins directory and retrieve all plugin files with plugin data.
      *
-     * WordPress only supports plugin files in the base plugins directory
-     * (wp-content/plugins) and in one directory above the plugins directory
-     * (wp-content/plugins/my-plugin). The file it looks for has the plugin data
-     * and must be found in those two locations. It is recommended to keep your
-     * plugin files in their own directories.
-     *
-     * The file with the plugin data is the file that will be included and therefore
-     * needs to have the main execution for the plugin. This does not mean
-     * everything must be contained in the file and it is recommended that the file
-     * be split for maintainability. Keep everything in one file for extreme
-     * optimization purposes.
-     *
-     * @since 1.5.0
-     *
-     * @param string $pluginFolder Optional. Relative path to single plugin folder.
-     * @return array Key is the plugin file path and the value is an array of the plugin data.
+     * @param string $pluginFolder
+     * @return array
      */
     public function getPlugins($pluginFolder = '')
     {
+        if (!function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
         return get_plugins($pluginFolder);
     }
 
     /**
      * Sanitizes a title, or returns a fallback title.
-     *
-     * Specifically, HTML and PHP tags are stripped. Further actions can be added
-     * via the plugin API. If $title is empty and $fallback_title is set, the latter
-     * will be used.
-     *
-     * @since 1.0.0
-     *
-     * @param string $title The string to be sanitized.
-     * @param string $fallbackTitle Optional. A title to use if $title is empty.
-     * @param string $context Optional. The operation for which the string is sanitized
-     * @return string The sanitized string.
      */
     public function sanitizeTitle($title, $fallbackTitle = '', $context = 'save')
     {
@@ -523,15 +423,18 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
             return $pluginFile;
         }
 
-        if ('src' == end($pluginFileParts)) {
+        // رفع خطای PHP 8+ برای استفاده از تابع end() روی خروجی مستقیم تابع
+        $lastPart = end($pluginFileParts);
+        if ('src' === $lastPart) {
             array_pop($pluginFileParts);
-            $pluginFileParts[] = end($pluginFileParts) . '.php';
+            $secondLastPart = end($pluginFileParts);
+            $pluginFileParts[] = $secondLastPart . '.php';
             $pluginFile = implode(DIRECTORY_SEPARATOR, $pluginFileParts);
         }
 
         $pluginBaseName = implode(DIRECTORY_SEPARATOR, array_slice($pluginFileParts, -2));
         $candidate      = rtrim(WP_PLUGIN_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $pluginBaseName;
-        if (file_exists($candidate) && realpath($candidate) == $pluginFile) {
+        if (file_exists($candidate) && realpath($candidate) === $pluginFile) {
             return $candidate;
         }
 
@@ -540,26 +443,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Enqueue a CSS stylesheet.
-     *
-     * Registers the style if source provided (does NOT overwrite) and enqueues.
-     *
-     * @link https://www.w3.org/TR/CSS2/media.html#media-types List of CSS media types.
-     *
-     * @since 2.6.0
-     *
-     * @param string           $name         Name of the stylesheet. Should be unique.
-     * @param string           $src          Full URL of the stylesheet, or path of the stylesheet relative
-     *                                       to the WordPress root directory.
-     * @param array            $dependencies Optional. An array of registered stylesheet handles this stylesheet
-     *                                       depends on. Default empty array.
-     * @param string|bool|null $version      Optional. String specifying stylesheet version number, if it has one,
-     *                                       which is added to the URL as a query string for cache busting purposes.
-     *                                       If version is set to false, a version number is automatically added equal
-     *                                       to current installed WordPress version.
-     *                                       If set to null, no version is added.
-     * @param string           $media        Optional. The media for which this stylesheet has been defined.
-     *                                       Default 'all'. Accepts media types like 'all', 'print' and 'screen',
-     *                                       or media queries like '(orientation: portrait)' and '(max-width: 640px)'.
      */
     public function enqueueStyle($name, $src = false, $dependencies = array(), $version = false, $media = 'all')
     {
@@ -569,12 +452,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Enqueue a CSS stylesheet related to plugin path.
-     *
-     * @since 2.6.0
-     *
-     * @param string $name Name of the stylesheet.
-     * @param string $pluginRelatedPath
-     * @return WpTesting_WordPressFacade
      */
     public function enqueuePluginStyle($name, $pluginRelatedPath)
     {
@@ -583,15 +460,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Enqueue an JS script related to plugin path.
-     *
-     * @since 2.6.0
-     *
-     * @param string $name Name of the script.
-     * @param string $pluginRelatedPath
-     * @param array $dependencies Optional. An array of registered handles this script depends on. Default empty array.
-     * @param string $version Optional. String specifying the script version number, if it has one. This parameter is used to ensure that the correct version is sent to the client regardless of caching, and so should be included if a version number is available and makes sense for the script.
-     * @param boolean $isInFooter Optional. Whether to enqueue the script before or before . Default 'false'. Accepts 'false' or 'true'.
-     * @return WpTesting_WordPressFacade
      */
     public function enqueuePluginScript($name, $pluginRelatedPath, array $dependencies = array(), $version = false, $isInFooter = false)
     {
@@ -602,17 +470,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Register an JS script related to plugin path.
-     *
-     * Mainly to use in later dependencies.
-     *
-     * @since 2.6.0
-     *
-     * @param string $name Name of the script.
-     * @param string $pluginRelatedPath
-     * @param array $dependencies Optional. An array of registered handles this script depends on. Default empty array.
-     * @param string $version Optional. String specifying the script version number, if it has one. This parameter is used to ensure that the correct version is sent to the client regardless of caching, and so should be included if a version number is available and makes sense for the script.
-     * @param boolean $isInFooter Optional. Whether to enqueue the script before or before . Default 'false'. Accepts 'false' or 'true'.
-     * @return WpTesting_WordPressFacade
      */
     public function registerPluginScript($name, $pluginRelatedPath, array $dependencies = array(), $version = false, $isInFooter = false)
     {
@@ -622,15 +479,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Register new JavaScript file.
-     *
-     * @since r16
-     *
-     * @param string $name
-     * @param string $path
-     * @param array $dependencies
-     * @param string $version
-     * @param boolean $isInFooter
-     * @return WpTesting_WordPressFacade
      */
     public function registerScript($name, $path, array $dependencies = array(), $version = false, $isInFooter = false)
     {
@@ -645,29 +493,36 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      */
     public function getScripts()
     {
-        if (!isset($GLOBALS['wp_scripts']) || !is_a($GLOBALS['wp_scripts'], 'WP_Scripts')) {
+        if (!isset($GLOBALS['wp_scripts']) || !($GLOBALS['wp_scripts'] instanceof WP_Scripts)) {
             $GLOBALS['wp_scripts'] = new WP_Scripts();
         }
 
         return $GLOBALS['wp_scripts'];
     }
 
+    /**
+     * Safely load WordPress core admin classes
+     */
     public function loadClass($className)
     {
-        if ('WP_List_Table' == $className) {
-            require_once(ABSPATH . 'wp-admin/includes/class-wp-screen.php');
-            require_once(ABSPATH . 'wp-admin/includes/template.php');
-            require_once(ABSPATH . 'wp-admin/includes/screen.php');
-            require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
+        if ('WP_List_Table' === $className && !class_exists('WP_List_Table')) {
+            if (file_exists(ABSPATH . 'wp-admin/includes/class-wp-screen.php')) {
+                require_once(ABSPATH . 'wp-admin/includes/class-wp-screen.php');
+            }
+            if (file_exists(ABSPATH . 'wp-admin/includes/template.php')) {
+                require_once(ABSPATH . 'wp-admin/includes/template.php');
+            }
+            if (file_exists(ABSPATH . 'wp-admin/includes/screen.php')) {
+                require_once(ABSPATH . 'wp-admin/includes/screen.php');
+            }
+            if (file_exists(ABSPATH . 'wp-admin/includes/class-wp-list-table.php')) {
+                require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
+            }
         }
     }
 
     /**
      * Determine if SSL is used.
-     *
-     * @since 2.6.0
-     *
-     * @return bool True if SSL, false if not used.
      */
     public function isSsl()
     {
@@ -675,30 +530,21 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     }
 
     /**
-     * Remove a registered script (-s)
-     *
-     * @since r16
-     * @param string|array $name
-     * @return WpTesting_WordPressFacade
+     * Remove a registered script
      */
     public function deregisterScript($name)
     {
         wp_deregister_script($name);
         return $this;
-    }
-
-    /**
+    }/**
      * Loads the plugin's translated strings.
      *
      * If the path is not given then it will be the root of the plugin directory.
      * The .mo file should be named based on the domain with a dash, and then the locale exactly.
      *
-     * @since 1.5.0
-     *
      * @param string $domain Unique identifier for retrieving translated strings
-     * @param string $absoluteRelativePath Optional. Relative path to ABSPATH of a folder,
-     * 	where the .mo file resides. Deprecated, but still functional until 2.7
-     * @param string $pluginsRelativePath Optional. Relative path to WP_PLUGIN_DIR. This is the preferred argument to use. It takes precendence over $abs_rel_path
+     * @param string|bool $absoluteRelativePath Deprecated, but still functional.
+     * @param string|bool $pluginsRelativePath Relative path to WP_PLUGIN_DIR.
      * @return boolean
      */
     public function loadPluginTextdomain($domain, $absoluteRelativePath = false, $pluginsRelativePath = false)
@@ -711,20 +557,9 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
      *
      * Works only if the script has already been added.
      *
-     * Accepts an associative array $l10n and creates a JavaScript object:
-     *
-     *     "$object_name" = {
-     *         key: value,
-     *         key: value,
-     *         ...
-     *     }
-     *
-     * @since 2.6.0
-     *
      * @param string $handle      Script handle the data will be attached to.
-     * @param string $objectName  Name for the JavaScript object. Passed directly, so it should be qualified JS variable.
-     *                            Example: '/[a-zA-Z0-9_]+/'.
-     * @param array $l10n         The data itself. The data can be either a single or multi-dimensional array.
+     * @param string $objectName  Name for the JavaScript object.
+     * @param array $l10n         The data itself.
      * @return bool True if the script was successfully localized, false otherwise.
      */
     public function localizeScript($handle, $objectName, $l10n)
@@ -735,14 +570,12 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     /**
      * Retrieve the name of the highest priority template file that exists.
      *
-     * @since 2.7.0
-     *
      * @param string|array $templateNames Template file(s) to search for, in order.
-     * @param string $isLoad  If true the template file will be loaded if it is found.
-     * @param string $isRequireOnce Whether to require_once or require. Default true. Has no effect if $isLoad is false.
+     * @param bool $isLoad  If true the template file will be loaded if it is found.
+     * @param bool $isRequireOnce Whether to require_once or require. Default true.
      * @return string The template filename if one is located.
      */
-    public function locateTemplate($templateNames, $isLoad = false, $isRequireOnce = true )
+    public function locateTemplate($templateNames, $isLoad = false, $isRequireOnce = true)
     {
         return locate_template($templateNames, $isLoad, $isRequireOnce);
     }
@@ -750,10 +583,8 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     /**
      * Retrieve full permalink for post by ID or current post
      *
-     * @since 1.0.0
-     *
-     * @param integer|WP_Post|stdClass $id
-     * @param string $isLeaveName
+     * @param integer|WP_Post $id
+     * @param bool $isLeaveName
      * @return string|bool
      */
     public function getPermalink($id = 0, $isLeaveName = false)
@@ -764,11 +595,9 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     /**
      * Retrieve the permalink for a post with a custom post type.
      *
-     * @since 3.0.0
-     *
      * @param int $id Optional. Post ID.
-     * @param bool $isLeavename Optional, defaults to false. Whether to keep post name.
-     * @param bool $isSample Optional, defaults to false. Is it a sample permalink.
+     * @param bool $isLeavename Optional.
+     * @param bool $isSample Optional.
      * @return string The post permalink.
      */
     public function getPostPermalink($id = 0, $isLeavename = false, $isSample = false)
@@ -779,13 +608,8 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     /**
      * Retrieve edit posts link for post.
      *
-     * Can be used within the WordPress loop or outside of it. Can be used with
-     * pages, posts, attachments, and revisions.
-     *
-     * @since 2.3.0
-     *
      * @param int $id Optional. Post ID.
-     * @param string $context Optional, defaults to display. How to write the '&', defaults to '&amp;'.
+     * @param string $context Optional, defaults to display.
      * @return string The edit post link for the given post.
      */
     public function getEditPostLink($id = 0, $context = 'display')
@@ -795,8 +619,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve edit term url.
-     *
-     * @since 3.1.0
      *
      * @param int $id Term ID
      * @param string $taxonomy Taxonomy
@@ -809,17 +631,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     }
 
     /**
-     * Get extended entry info (<!--more-->).
-     *
-     * There should not be any space after the second dash and before the word
-     * 'more'. There can be text or space(s) after the word 'more', but won't be
-     * referenced.
-     *
-     * The returned array has 'main', 'extended', and 'more_text' keys. Main has the text before
-     * the `<!--more-->`. The 'extended' key has the content after the
-     * `<!--more-->` comment. The 'more_text' key has the custom "Read More" text.
-     *
-     * @since 1.0.0
+     * Get extended entry info ().
      *
      * @param string $post Post content.
      * @return array Post before ('main'), after ('extended'), and custom readmore ('more_text').
@@ -832,8 +644,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     /**
      * Redirects to another page.
      *
-     * @since 1.5.1
-     *
      * @param string $location The path to redirect to.
      * @param int $status Status code to use.
      * @return bool False if $location is not provided, true otherwise.
@@ -845,19 +655,7 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Performs a safe (local) redirect, using redirect().
-     *
-     * Checks whether the $location is using an allowed host, if it has an absolute
-     * path. A plugin can therefore set or remove allowed host(s) to or from the
-     * list.
-     *
-     * If the host is not allowed, then the redirect is to wp-admin on the siteurl
-     * instead. This prevents malicious redirects which redirect to another host,
-     * but only used in a few places.
-     *
-     * @since 2.3.0
-     *
-     * @return void Does not return anything
-     **/
+     */
     public function safeRedirect($location, $status = 302)
     {
         return wp_safe_redirect($location, $status);
@@ -865,16 +663,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Send mail, similar to PHP's mail
-     *
-     * @since 1.2.1
-     *
-     * @param string|array $to          Array or comma-separated list of email addresses to send message.
-     * @param string       $subject     Email subject
-     * @param string       $message     Message contents
-     * @param string|array $headers     Optional. Additional headers.
-     * @param string|array $attachments Optional. Files to attach.
-     *
-     * @return bool Whether the email contents were sent successfully.
      */
     public function mail($to, $subject, $message, $headers = '', $attachments = array())
     {
@@ -883,32 +671,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Get salt to add to hashes.
-     *
-     * Salts are created using secret keys. Secret keys are located in two places:
-     * in the database and in the wp-config.php file. The secret key in the database
-     * is randomly generated and will be appended to the secret keys in wp-config.php.
-     *
-     * The secret keys in wp-config.php should be updated to strong, random keys to maximize
-     * security. Below is an example of how the secret key constants are defined.
-     * Do not paste this example directly into wp-config.php. Instead, have a
-     * {@link https://api.wordpress.org/secret-key/1.1/salt/ secret key created} just
-     * for you.
-     *
-     *     define('AUTH_KEY',         ' Xakm<o xQy rw4EMsLKM-?!T+,PFF})H4lzcW57AF0U@N@< >M%G4Yt>f`z]MON');
-     *     define('SECURE_AUTH_KEY',  'LzJ}op]mr|6+![P}Ak:uNdJCJZd>(Hx.-Mh#Tz)pCIU#uGEnfFz|f ;;eU%/U^O~');
-     *     define('LOGGED_IN_KEY',    '|i|Ux`9<p-h$aFf(qnT:sDO:D1P^wZ$$/Ra@miTJi9G;ddp_<q}6H1)o|a +&JCM');
-     *     define('NONCE_KEY',        '%:R{[P|,s.KuMltH5}cI;/k<Gx~j!f0I)m_sIyu+&NJZ)-iO>z7X>QYR0Z_XnZ@|');
-     *     define('AUTH_SALT',        'eZyT)-Naw]F8CwA*VaW#q*|.)g@o}||wf~@C-YSt}(dh_r6EbI#A,y|nU2{B#JBW');
-     *     define('SECURE_AUTH_SALT', '!=oLUTXh,QW=H `}`L|9/^4-3 STz},T(w}W<I`.JjPi)<Bmf1v,HpGe}T1:Xt7n');
-     *     define('LOGGED_IN_SALT',   '+XSqHc;@Q*K_b|Z?NC[3H!!EONbh.n<+=uKR:>*c(u`g~EJBf#8u#R{mUEZrozmm');
-     *     define('NONCE_SALT',       'h`GXHhD>SLWVfg1(1(N{;.V!MoE(SfbA_ksP@&`+AycHcAV$+?@3q+rxV{%^VyKT');
-     *
-     * Salting passwords helps against tools which has stored hashed values of
-     * common dictionary strings. The added values makes it harder to crack.
-     *
-     * @since 2.5.0
-     *
-     * @link https://api.wordpress.org/secret-key/1.1/salt/ Create secrets for wp-config.php
      *
      * @param string $scheme Authentication scheme (auth, secure_auth, logged_in, nonce)
      * @return string Salt value
@@ -920,52 +682,29 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Hooks a function on to a specific action.
-     *
-     * @since 1.2.0
-     * @link http://codex.wordpress.org/Function_Reference/add_action
-     *
-     * @param string $tag The name of the action to which the $function is hooked.
-     * @param callback $function The name of the function you wish to be called.
-     * @param int $priority optional. Used to specify the order in which the functions associated with a particular action are executed (default: 10). Lower numbers correspond with earlier execution, and functions with the same priority are executed in the order in which they were added to the action.
-     * @param int $functionArgsCount optional. The number of arguments the function accept (default 1).
-     * @return WpTesting_WordPressFacade
      */
-    public function addAction($tag, $function, $priority = self::PRIORITY_DEFAULT, $functionArgsCount = 1)
+    public function addAction($tag, $function, $priority = 10, $functionArgsCount = 1)
     {
-        add_action($tag, $function, $priority, $functionArgsCount);
+        // در صورتی که ثابت کلاس تعریف نشده باشد از مقدار پیش‌فرض 10 استفاده می‌شود
+        $fallbackPriority = defined('self::PRIORITY_DEFAULT') ? self::PRIORITY_DEFAULT : 10;
+        $actualPriority = ($priority === 'self::PRIORITY_DEFAULT' || $priority === null) ? $fallbackPriority : $priority;
+
+        add_action($tag, $function, $actualPriority, $functionArgsCount);
         return $this;
     }
 
     /**
      * Execute functions hooked on a specific action hook.
-     *
-     * This function invokes all functions attached to action hook `$tag`. It is
-     * possible to create new action hooks by simply calling this function,
-     * specifying the name of the new hook using the `$tag` parameter.
-     *
-     * @since 1.2.0
-     *
-     * @param string $tag The name of the action to be executed.
-     * @param mixed  ...$arg Additional arguments which are passed on to the
-     *                    functions hooked to the action.
-     * @return null Will return null if $tag does not exist in $wp_filter array.
+     * Fully Optimized for PHP 8.x using Variadic Arguments natively
      */
     public function doAction($tag, ...$args)
     {
-        // استفاده از Variadic Arguments در PHP 8+ به جای func_get_args() قدیمی
-        return do_action($tag, ...$args);
+        do_action($tag, ...$args);
+        return null;
     }
 
     /**
      * Retrieve the number times an action is fired.
-     *
-     * @package WordPress
-     * @subpackage Plugin
-     * @since 2.1
-     * @global array $wp_actions Increments the amount of times action was triggered.
-     *
-     * @param string $tag The name of the action hook.
-     * @return int The number of times action hook <tt>$tag</tt> is fired
      */
     public function didAction($tag)
     {
@@ -974,17 +713,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Removes a function from a specified action hook.
-     *
-     * This function removes a function attached to a specified action hook. This
-     * method can be used to remove default functions attached to a specific filter
-     * hook and possibly replace them with a substitute.
-     *
-     * @since 1.2.0
-     *
-     * @param string   $tag      The action hook to which the function to be removed is hooked.
-     * @param callback $function The name of the function which should be removed.
-     * @param int      $priority Optional. The priority of the function. Default 10.
-     * @return WpTesting_WordPressFacade
      */
     public function removeAction($tag, $function, $priority = 10)
     {
@@ -994,34 +722,18 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Hooks a function or method to a specific filter action.
-     *
-     * @since 0.71
-     *
-     * @param string $tag The name of the action to which the $function is hooked.
-     * @param callback $function The name of the function you wish to be called.
-     * @param int $priority optional. Used to specify the order in which the functions associated with a particular action are executed (default: 10). Lower numbers correspond with earlier execution, and functions with the same priority are executed in the order in which they were added to the action.
-     * @param int $functionArgsCount optional. The number of arguments the function accept (default 1).
-     * @return WpTesting_WordPressFacade
      */
-    public function addFilter($tag, $function, $priority = self::PRIORITY_DEFAULT, $functionArgsCount = 1)
+    public function addFilter($tag, $function, $priority = 10, $functionArgsCount = 1)
     {
-        add_filter($tag, $function, $priority, $functionArgsCount);
+        $fallbackPriority = defined('self::PRIORITY_DEFAULT') ? self::PRIORITY_DEFAULT : 10;
+        $actualPriority = ($priority === 'self::PRIORITY_DEFAULT' || $priority === null) ? $fallbackPriority : $priority;
+
+        add_filter($tag, $function, $actualPriority, $functionArgsCount);
         return $this;
     }
 
     /**
      * Check if any filter has been registered for a hook.
-     *
-     * @since 2.5.0
-     *
-     * @param string        $tag               The name of the filter hook.
-     * @param callback|boolean $function Optional. The callback to check for. Default false.
-     * @return boolean|integer If $function is omitted, returns boolean for whether the hook has
-     *                   anything registered. When checking a specific function, the priority of that
-     *                   hook is returned, or false if the function is not attached. When using the
-     *                   $function_to_check argument, this function may return a non-boolean value
-     *                   that evaluates to false (e.g.) 0, so use the === operator for testing the
-     *                   return value.
      */
     public function hasFilter($tag, $function = false)
     {
@@ -1030,37 +742,22 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Adds filter once
-     *
-     * @see WpTesting_WordPressFacade::addFilter
-     * @return WpTesting_WordPressFacade
      */
-    public function addFilterOnce($tag, $function, $priority = self::PRIORITY_DEFAULT, $functionArgsCount = 1)
+    public function addFilterOnce($tag, $function, $priority = 10, $functionArgsCount = 1)
     {
         if ($this->hasFilter($tag, $function) !== false) {
             return $this;
         }
         return $this->addFilter($tag, $function, $priority, $functionArgsCount);
     }
-
+    
     /**
      * Removes a function from a specified filter hook.
      *
-     * This function removes a function attached to a specified filter hook. This
-     * method can be used to remove default functions attached to a specific filter
-     * hook and possibly replace them with a substitute.
-     *
-     * To remove a hook, the $function_to_remove and $priority arguments must match
-     * when the hook was added. This goes for both filters and actions. No warning
-     * will be given on removal failure.
-     *
-     * @package WordPress
-     * @subpackage Plugin
-     * @since 1.2
-     *
-     * @param string $tag The filter hook to which the function to be removed is hooked.
-     * @param callback $functionToRemove The name of the function which should be removed.
-     * @param int $priority optional. The priority of the function (default: 10).
-     * @param int $acceptedArgs optional. The number of arguments the function accpets (default: 1).
+     * @param string $tag
+     * @param callable $functionToRemove
+     * @param int $priority
+     * @param int $acceptedArgs
      * @return WpTesting_WordPressFacade
      */
     public function removeFilter($tag, $functionToRemove, $priority = 10, $acceptedArgs = 1)
@@ -1071,34 +768,15 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Call the functions added to a filter hook.
-     *
-     * The callback functions attached to filter hook $tag are invoked by calling
-     * this function. This function can be used to create a new filter hook by
-     * simply calling this function with the name of the new hook specified using
-     * the $tag parameter.
-     *
-     * @since 0.71
-     *
-     * @param string $tag   The name of the filter hook.
-     * @param mixed  $value The value on which the filters hooked to `$tag` are applied on.
-     * @param mixed  ...$args Additional arguments passed to the filter functions.
-     * @return mixed The filtered value after all hooked functions are applied to it.
+     * Fully Optimized for PHP 8.x natively using Variadic Arguments
      */
     public function applyFilters($tag, $value, ...$args)
     {
-        // استفاده از Variadic Arguments در PHP 8+ به جای func_get_args() قدیمی
         return apply_filters($tag, $value, ...$args);
     }
 
     /**
      * Add hook for shortcode tag.
-     *
-     * @since 2.5.0
-     * @link http://codex.wordpress.org/Function_Reference/add_shortcode
-     *
-     * @param string $tag Shortcode tag to be searched in post content.
-     * @param callable $function Hook to run when shortcode is found.
-     * @return WpTesting_WordPressFacade
      */
     public function addShortcode($tag, $function)
     {
@@ -1108,29 +786,15 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Search content for shortcodes and filter shortcodes through their hooks.
-     *
-     * If there are no shortcode tags defined, then the content will be returned
-     * without any filtering. This might cause issues when plugins are disabled but
-     * the shortcode will still show up in the post or content.
-     *
-     * @since 2.5.0
-     *
-     * @param string $content Content to search for shortcodes.
-     * @param bool $ignoreHtml When true, shortcodes inside HTML elements will be skipped.
-     * @return string Content with shortcodes filtered out.
      */
-    public function doShortcode($content, $ignoreHtml = false )
+    public function doShortcode($content, $ignoreHtml = false)
     {
+        // در وردپرس‌های جدید برای بهینه‌سازی بهتر است از تابع استاندارد تری بهره برده شود اما این تابع همچنان سازگار است
         return do_shortcode($content, $ignoreHtml);
     }
 
     /**
      * Removes hook for shortcode.
-     *
-     * @since 2.5.0
-     *
-     * @param string $tag Shortcode tag to remove hook for.
-     * @return WpTesting_WordPressFacade
      */
     public function removeShortcode($tag)
     {
@@ -1140,20 +804,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Combine user attributes with known attributes and fill in defaults when needed.
-     *
-     * The pairs should be considered to be all of the attributes which are
-     * supported by the caller and given as a list. The returned attributes will
-     * only contain the attributes in the $defaults list.
-     *
-     * If the $attributes list has unsupported attributes, then they will be ignored and
-     * removed from the final returned list.
-     *
-     * @since 2.5.0
-     *
-     * @param array  $defaults     Entire list of supported attributes and their defaults.
-     * @param array  $attributes   User defined attributes in shortcode tag.
-     * @param string $shortcode    Optional. The name of the shortcode, provided for context to enable filtering
-     * @return array Combined and filtered attribute list.
      */
     public function sanitazeShortcodeAttributes($defaults, $attributes, $shortcode = '')
     {
@@ -1162,27 +812,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Add a meta box to an edit form.
-     *
-     * @since 2.5.0
-     *
-     * @param string           $id            String for use in the 'id' attribute of tags.
-     * @param string           $title         Title of the meta box.
-     * @param callable         $function      Function that fills the box with the desired content.
-     *                                        The function should echo its output.
-     * @param string|WP_Screen $screen        Optional. The screen on which to show the box (like a post
-     *                                        type, 'link', or 'comment'). Default is the current screen.
-     * @param string           $context       Optional. The context within the screen where the boxes
-     *                                        should display. Available contexts vary from screen to
-     *                                        screen. Post edit screen contexts include 'normal', 'side',
-     *                                        and 'advanced'. Comments screen contexts include 'normal'
-     *                                        and 'side'. Menus meta boxes (accordion sections) all use
-     *                                        the 'side' context. Global default is 'advanced'.
-     * @param string           $priority      Optional. The priority within the context where the boxes
-     *                                        should show ('high', 'low'). Default 'default'.
-     * @param array            $functionArgs  Optional. Data that should be set as the $args property
-     *                                        of the box array (which is the second parameter passed
-     *                                        to your callback). Default null.
-     * @return WpTesting_WordPressFacade
      */
     public function addMetaBox($id, $title, $function, $screen = null, $context = 'advanced', $priority = 'default', $functionArgs = null)
     {
@@ -1192,36 +821,23 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Get metaboxes by provided screen, context and priority
-     *
-     * @param string $screen
-     * @param string $context
-     * @param string $priority
-     *
-     * @return array
      */
     public function getMetaBoxes($screen = null, $context = 'advanced', $priority = 'default')
     {
-        return $this->processMetaBoxes($screen, $context, $priority, __FUNCTION__, null);
+        return $this->processMetaBoxes($screen, $context, $priority, 'getMetaBoxes', null);
     }
 
     /**
      * Set metaboxes by provided screen, context and priority to values
-     *
-     * @param array $values
-     * @param string $screen
-     * @param string $context
-     * @param string $priority
-     *
-     * @return WpTesting_WordPressFacade
      */
     public function setMetaBoxes($values, $screen = null, $context = 'advanced', $priority = 'default')
     {
-        $this->processMetaBoxes($screen, $context, $priority, __FUNCTION__, $values);
+        $this->processMetaBoxes($screen, $context, $priority, 'setMetaBoxes', $values);
         return $this;
     }
 
     /**
-     * @return array
+     * Process Meta Boxes with PHP 8+ Null-safe protection
      */
     protected function processMetaBoxes($screen, $context, $priority, $action, $values)
     {
@@ -1233,35 +849,40 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
             $screen = convert_to_screen($screen);
         }
 
-        // جلوگیری از Fatal Error در PHP 8 در صورت null بودن screen
-        if (!$screen || !isset($screen->id)) {
+        // جلوگیری از Fatal Error در صورت null یا false بودن ساختار اسکرین فعلی
+        if (!$screen || !isset($screen->id) || !is_object($screen)) {
             return 'getMetaBoxes' === $action ? array() : null;
         }
 
         $page = $screen->id;
 
-        if (empty($wp_meta_boxes[$page][$context][$priority])) {
+        // مقداردهی اولیه امن برای جلوگیری از خطای ساختار Undefined Array Key
+        if (!isset($wp_meta_boxes) || !is_array($wp_meta_boxes)) {
+            $wp_meta_boxes = array();
+        }
+
+        if (!isset($wp_meta_boxes[$page][$context][$priority])) {
             $wp_meta_boxes[$page][$context][$priority] = array();
         }
 
-        if ('getMetaBoxes' == $action) {
-            return $wp_meta_boxes[$page][$context][$priority];
-        } elseif ('setMetaBoxes' == $action) {
+        if ('getMetaBoxes' === $action) {
+            return $wp_meta_boxes[$page][$context][$priority] ?? array();
+        } elseif ('setMetaBoxes' === $action) {
             $wp_meta_boxes[$page][$context][$priority] = $values;
             return array();
         }
+
+        return array();
     }
 
     /**
-     * Get the current screen object
+     * Get the current screen object safely
      *
-     * @since 3.1.0
-     *
-     * @return WP_Screen Current screen object
+     * @return WP_Screen|null Current screen object or null
      */
     public function getCurrentScreen()
     {
-        return get_current_screen();
+        return function_exists('get_current_screen') ? get_current_screen() : null;
     }
 
     /**
@@ -1282,78 +903,43 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Saves option for number of rows when listing posts, pages, comments, etc.
-     *
-     * @since 2.8.0
-     *
-     * @return WpTesting_WordPressFacade
      */
     public function setScreenOptions()
     {
-        set_screen_options();
+        if (function_exists('set_screen_options')) {
+            set_screen_options();
+        }
         return $this;
     }
-
+    
     /**
      * Register and configure an admin screen option
      *
-     * @since 3.1.0
-     *
      * @param string $option An option name.
      * @param mixed $args Option-dependent arguments.
-     *
      * @return WpTesting_WordPressFacade
      */
     public function addScreenOption($option, $args = array())
     {
-        add_screen_option($option, $args);
+        if (function_exists('add_screen_option')) {
+            add_screen_option($option, $args);
+        }
         return $this;
     }
 
     /**
      * Add a top level menu page in the 'objects' section
      *
-     * This function takes a capability which will be used to determine whether
-     * or not a page is included in the menu.
-     *
-     * The function which is hooked in to handle the output of the page must check
-     * that the user has the required capability as well.
-     *
-     * @param string $pageTitle The text to be displayed in the title tags of the page when the menu is selected
-     * @param string $menuTitle The text to be used for the menu
-     * @param string $capability The capability required for this menu to be displayed to the user.
-     * @param string $menuSlug The slug name to refer to this menu by (should be unique for this menu)
-     * @param callback $function The function to be called to output the content for this page.
-     * @param string $iconUrl The url to the icon to be used for this menu.
-     *     * [WP >= 3.8] Pass a base64-encoded SVG using a data URI, which will be colored to match the color scheme.
-     *       This should begin with 'data:image/svg+xml;base64,'.
-     *     * [WP >= 3.8] Pass the name of a Dashicons helper class to use a font icon, e.g. 'dashicons-chart-pie'.
-     *     * Pass 'none' to leave div.wp-menu-image empty so an icon can be added via CSS.
-     *
      * @return string The resulting page's hook_suffix
      */
     public function addObjectPage($pageTitle, $menuTitle, $capability, $menuSlug, $function = '', $iconUrl = '')
     {
-        // تابع add_object_page در وردپرس 4.5 منسوخ و در نسخه‌های جدید (از جمله 7) حذف شده است.
-        // به جای آن از add_menu_page استفاده می‌کنیم که دقیقاً همین پارامترها را می‌پذیرد.
+        // با توجه به حذف کامل add_object_page، استفاده از add_menu_page در نسخه‌های جدید الزامی است.
         return add_menu_page($pageTitle, $menuTitle, $capability, $menuSlug, $function, $iconUrl);
     }
 
     /**
      * Add a sub menu page
-     *
-     * This function takes a capability which will be used to determine whether
-     * or not a page is included in the menu.
-     *
-     * The function which is hooked in to handle the output of the page must check
-     * that the user has the required capability as well.
-     *
-     * @param string $parentSlug The slug name for the parent menu (or the file name of a standard WordPress admin page)
-     * @param string $pageTitle The text to be displayed in the title tags of the page when the menu is selected
-     * @param string $menuTitle The text to be used for the menu
-     * @param string $capability The capability required for this menu to be displayed to the user.
-     * @param string $menuSlug The slug name to refer to this menu by (should be unique for this menu)
-     * @param callback $function The function to be called to output the content for this page.
-     * @return string|boolean The resulting page's hook_suffix, or false if the user does not have the capability required.
      */
     public function addSubmenuPage($parentSlug, $pageTitle, $menuTitle, $capability, $menuSlug, $function = '')
     {
@@ -1362,34 +948,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieves the terms associated with the given object(s), in the supplied taxonomies.
-     *
-     * The following information has to do the $args parameter and for what can be
-     * contained in the string or array of that parameter, if it exists.
-     *
-     * The first argument is called, 'orderby' and has the default value of 'name'.
-     * The other value that is supported is 'count'.
-     *
-     * The second argument is called, 'order' and has the default value of 'ASC'.
-     * The only other value that will be acceptable is 'DESC'.
-     *
-     * The final argument supported is called, 'fields' and has the default value of
-     * 'all'. There are multiple other options that can be used instead. Supported
-     * values are as follows: 'all', 'ids', 'names', and finally
-     * 'all_with_object_id'.
-     *
-     * The fields argument also decides what will be returned. If 'all' or
-     * 'all_with_object_id' is chosen or the default kept intact, then all matching
-     * terms objects will be returned. If either 'ids' or 'names' is used, then an
-     * array of all matching term ids or term names will be returned respectively.
-     *
-     * @since 2.3.0
-     *
-     * @global wpdb $wpdb WordPress database abstraction object.
-     *
-     * @param int|array $objectIds The ID(s) of the object(s) to retrieve.
-     * @param string|array $taxonomies The taxonomies to retrieve terms from.
-     * @param array|string $args Change what is returned
-     * @return array|WP_Error The requested term data or empty array if no terms found. WP_Error if any of the $taxonomies don't exist.
      */
     public function getObjectTerms($objectIds, $taxonomies, $args = array())
     {
@@ -1398,13 +956,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Register a post type. Do not use before init.
-     *
-     * @since 2.9.0
-     * @link http://codex.wordpress.org/Function_Reference/register_post_type
-     *
-     * @param string $name Post type key, must not exceed 20 characters.
-     * @param array $parameters
-     * @return WpTesting_WordPressFacade
      */
     public function registerPostType($name, $parameters = array())
     {
@@ -1414,14 +965,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Create or modify a taxonomy object. Do not use before init.
-     *
-     * @since 2.3.0
-     * @link http://codex.wordpress.org/Function_Reference/register_taxonomy
-     *
-     * @param string $name Taxonomy key, must not exceed 32 characters.
-     * @param array|string $objectType Name of the object type(s) for the taxonomy object.
-     * @param array|string $parameters
-     * @return WpTesting_WordPressFacade
      */
     public function registerTaxonomy($name, $objectType, $parameters = array())
     {
@@ -1431,13 +974,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieves the taxonomy object of $taxonomy.
-     *
-     * @since 2.3.0
-     *
-     * @uses $wp_taxonomies
-     *
-     * @param string $taxonomy Name of taxonomy object to return
-     * @return object|bool The Taxonomy Object or false if $taxonomy doesn't exist
      */
     public function getTaxonomy($taxonomy)
     {
@@ -1446,13 +982,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Whether the current request is for a network or blog admin page
-     *
-     * Does not inform on whether the user is an admin! Use capability checks to
-     * tell if the user should be accessing a section or not.
-     *
-     * @since 1.5.1
-     *
-     * @return bool True if inside WordPress administration pages.
      */
     public function isAdministrationPage()
     {
@@ -1461,55 +990,39 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Set the activation hook for a plugin.
-     *
-     * @since 2.0.0
-     * @link http://codex.wordpress.org/Function_Reference/register_activation_hook
-     *
-     * @param callback $function the function hooked for action.
-     * @return WpTesting_WordPressFacade
      */
     public function registerActivationHook($function)
     {
-        register_activation_hook($this->pluginFile, $function);
+        if (!empty($this->pluginFile) && file_exists($this->pluginFile)) {
+            register_activation_hook($this->pluginFile, $function);
+        }
         return $this;
     }
 
     /**
      * Set the deactivation hook for a plugin.
-     *
-     * @since 2.0.0
-     * @link http://codex.wordpress.org/Function_Reference/register_deactivation_hook
-     *
-     * @param callback $function the function hooked for action.
-     * @return WpTesting_WordPressFacade
      */
     public function registerDeactivationHook($function)
     {
-        register_deactivation_hook($this->pluginFile, $function);
+        if (!empty($this->pluginFile) && file_exists($this->pluginFile)) {
+            register_deactivation_hook($this->pluginFile, $function);
+        }
         return $this;
     }
 
     /**
      * Set the uninstallation hook for a plugin.
-     *
-     * @since 2.7.0
-     * @link http://codex.wordpress.org/Function_Reference/register_uninstall_hook
-     *
-     * @param callback $function the function hooked for action.
-     * @return WpTesting_WordPressFacade
      */
     public function registerUninstallHook($function)
     {
-        register_uninstall_hook($this->pluginFile, $function);
+        if (!empty($this->pluginFile) && file_exists($this->pluginFile)) {
+            register_uninstall_hook($this->pluginFile, $function);
+        }
         return $this;
     }
 
     /**
      * If Multisite is enabled.
-     *
-     * @since 3.0.0
-     *
-     * @return bool True if Multisite is enabled, false otherwise.
      */
     public function isMultisite()
     {
@@ -1518,99 +1031,58 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Switch the current blog.
-     *
-     * This function is useful if you need to pull posts, or other information,
-     * from other blogs. You can switch back afterwards using restore_current_blog().
-     *
-     * Things that aren't switched:
-     *  - autoloaded options. See #14992
-     *  - plugins. See #14941
-     *
-     * @see restore_current_blog()
-     * @since MU
-     *
-     * @param int  $blogId   The id of the blog you want to switch to. Default: current blog
-     * @return true Always returns True.
      */
     public function switchToBlog($blogId)
     {
-        return switch_to_blog($blogId);
+        if (function_exists('switch_to_blog')) {
+            switch_to_blog($blogId);
+        }
+        return true; // برای سازگاری با معماری قدیمی همواره true برمی‌گرداند
     }
 
     /**
      * Restore the current blog, after calling switch_to_blog()
-     *
-     * @since MU
-     *
-     * @return bool True on success, false if we're already on the current blog
      */
     public function restoreCurrentBlog()
     {
-        return restore_current_blog();
+        return function_exists('restore_current_blog') ? restore_current_blog() : false;
     }
 
     /**
      * Check whether the plugin is active for the entire network.
-     *
-     * @since 3.0.0
-     *
-     * @param string $plugin Base plugin path from plugins directory.
-     * @return bool True, if active for the network, otherwise false.
      */
     public function isPluginActiveForNetwork($plugin = null)
     {
         if (is_null($plugin)) {
-            $plugin = $this->pluginFile;
+            $plugin = $this->pluginFile ?? '';
         }
+
+        if (empty($plugin) || !function_exists('is_plugin_active_for_network')) {
+            return false;
+        }
+
         return is_plugin_active_for_network($plugin);
     }
 
     /**
      * Kill WordPress execution and display HTML message with error message.
-     *
-     *
-     * @since 2.0.4
-     *
-     * @param string $message Error message.
-     * @param string $title Error title.
-     * @param string|array $arguments Optional arguments to control behavior.
-     *
-     * <p>Arguments:</p>
-     * <ul>
-     *     <li><strong>boolean 'back_link'</strong>      Do we need to display localized "Back link" link?</li>
-     *     <li><strong>integer 'response'</strong>       HTTP status code: 200, 500, 404, etc.</li>
-     *     <li><strong>string  'text_direction'</strong> Text direction: ltr, rtl</li>
-     * </ul>
      */
-    public function dieMessage($message='', $title='', $arguments=array())
+    public function dieMessage($message = '', $title = '', $arguments = array())
     {
         wp_die($message, $title, $arguments);
     }
 
     /**
-     * @return WP_Locale
+     * Get WP_Locale safely with type preservation
+     * * @return WP_Locale|null
      */
     public function getLocale()
     {
-        return $GLOBALS['wp_locale'];
+        return isset($GLOBALS['wp_locale']) && is_object($GLOBALS['wp_locale']) ? $GLOBALS['wp_locale'] : null;
     }
 
     /**
      * Add leading zeros when necessary.
-     *
-     * If you set the threshold to '4' and the number is '10', then you will get
-     * back '0010'. If you set the threshold to '4' and the number is '5000', then you
-     * will get back '5000'.
-     *
-     * Uses sprintf to append the amount of zeros based on the $threshold parameter
-     * and the size of the number. If the number is large enough, then no zeros will
-     * be appended.
-     *
-     * @since 0.71
-     *
-     * @param mixed $number Number to append zeros to if not greater than threshold.
-     * @param integer $threshold Digit places number needs to be to not have zeros added.
-     * @return string Adds leading zeros to number if needed.
      */
     public function zeroise($number, $threshold)
     {
@@ -1619,17 +1091,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Replaces double line-breaks with paragraph elements.
-     *
-     * A group of regex replaces used to identify text formatted with newlines and
-     * replace double line-breaks with HTML paragraph tags. The remaining line-breaks
-     * after conversion become <<br />> tags, unless $br is set to '0' or 'false'.
-     *
-     * @since 0.71
-     *
-     * @param string $textToFormat The text which has to be formatted.
-     * @param bool   $isConvertRemainingBreaks  Optional. If set, this will convert all remaining line-breaks
-     *                    after paragraphing. Default true.
-     * @return string Text which has been converted into correct paragraph tags.
      */
     public function autoParagraphise($textToFormat, $isConvertRemainingBreaks = true)
     {
@@ -1638,17 +1099,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve the translation of $text.
-     *
-     * If there is no translation, or the text domain isn't loaded, the original text is returned.
-     *
-     * <strong>Note:</strong> Use it directly instead of <em>__()</em> when you want to hide some translation.
-     *
-     * @see __()
-     * @since 2.2.0
-     *
-     * @param string $text   Text to translate.
-     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
-     * @return string Translated text
      */
     public function translate($text, $domain = 'default')
     {
@@ -1657,22 +1107,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve the plural or single form based on the supplied amount.
-     *
-     * If the text domain is not set in the $l10n list, then a comparison will be made
-     * and either $plural or $single parameters returned.
-     *
-     * If the text domain does exist, then the parameters $single, $plural, and $number
-     * will first be passed to the text domain's ngettext method. Then it will be passed
-     * to the 'ngettext' filter hook along with the same parameters. The expected
-     * type will be a string.
-     *
-     * @since 2.8.0
-     *
-     * @param string $single The text that will be used if $number is 1.
-     * @param string $plural The text that will be used if $number is not 1.
-     * @param int    $number The number to compare against to use either $single or $plural.
-     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
-     * @return string Either $single or $plural translated text.
      */
     public function translatePlural($single, $plural, $number, $domain = 'default')
     {
@@ -1681,17 +1115,6 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
 
     /**
      * Retrieve the plural or single form based on the supplied amount with gettext context.
-     *
-     * This is a hybrid of _n() and _x(). It supports contexts and plurals.
-     *
-     * @since 2.8.0
-     *
-     * @param string $single  The text that will be used if $number is 1.
-     * @param string $plural  The text that will be used if $number is not 1.
-     * @param int    $number  The number to compare against to use either $single or $plural.
-     * @param string $context Context information for the translators.
-     * @param string $domain  Optional. Text domain. Unique identifier for retrieving translated strings.
-     * @return string Either $single or $plural translated text with context.
      */
     public function translatePluralWithContext($single, $plural, $number, $context, $domain = 'default')
     {
@@ -1699,65 +1122,50 @@ class WpTesting_WordPressFacade implements WpTesting_Addon_IWordPressFacade
     }
 
     /**
-     * Retrieve the date in localized format, based on timestamp.
-     *
-     * If the locale specifies the locale month and weekday, then the locale will
-     * take over the format for the date. If it isn't, then the date format string
-     * will be used instead.
-     *
-     * @since 0.71
-     *
-     * @param string   $dateFormat Format to display the date.
-     * @param bool|int $timestamp  Optional. Unix timestamp. Default false.
-     * @param bool     $isUseGmt   Optional. Whether to use GMT timezone. Default false.
-     *
-     * @return string The date, translated if locale specifies it.
+     * Retrieve the date in localized format, updated for modern WordPress and PHP 8+ timezones
      */
     public function dateI18n($dateFormat, $timestamp = false, $isUseGmt = false)
     {
+        // تابع wp_date جایگزین مدرن و بدون باگ date_i18n برای مدیریت دقیق زمان است
+        if (function_exists('wp_date')) {
+            $timestamp = ($timestamp === false) ? null : (int)$timestamp;
+            $timezone = $isUseGmt ? new DateTimeZone('UTC') : null;
+            return wp_date($dateFormat, $timestamp, $timezone);
+        }
+
         return date_i18n($dateFormat, $timestamp, $isUseGmt);
     }
 
     /**
      * Loads current admin locale.
-     *
-     * @return boolean
      */
     public function loadCurrentAdminLocale()
     {
-        return load_textdomain('default', WP_LANG_DIR . '/admin-' . get_locale() . '.mo');
+        $locale = function_exists('get_locale') ? get_locale() : 'en_US';
+        $path = defined('WP_LANG_DIR') ? WP_LANG_DIR : WP_CONTENT_DIR . '/languages';
+        
+        return load_textdomain('default', $path . '/admin-' . $locale . '.mo');
     }
 
     /**
-     * Creates a cryptographic token tied to a specific action, user, user session, and window of time.
-     *
-     * @since 2.0.3
-     * @since 4.0.0 Session tokens were integrated with nonce creation
-     *
-     * @param string|int $action Scalar value to add context to the nonce.
-     *
-     * @return string The token.
+     * Creates a cryptographic token tied to a specific action.
      */
     public function createNonce($action = -1)
     {
         return wp_create_nonce($action);
     }
-
     /**
      * Verifies the Ajax request to prevent processing requests external of the blog.
-     *
-     * @since 2.0.3
+     * Fully compatible with PHP 8+ strict execution and modern WordPress standards.
      *
      * @param int|string   $action        Action nonce.
-     * @param false|string $queryArgument Optional. Key to check for the nonce in `$_REQUEST` (since 2.5). If false,
-     *                                    `$_REQUEST` values will be evaluated for '_ajax_nonce', and '_wpnonce'
-     *                                    (in that order). Default false.
+     * @param false|string $queryArgument Optional. Key to check for the nonce in `$_REQUEST`.
      * @param bool         $isDieEarly    Optional. Whether to die early when the nonce cannot be verified. Default true.
-     * @return false|int False if the nonce is invalid, 1 if the nonce is valid and generated between
-     *                   0-12 hours ago, 2 if the nonce is valid and generated between 12-24 hours ago.
+     * @return false|int False if the nonce is invalid, 1 or 2 if valid based on generation time.
      */
     public function checkAjaxReferer($action = -1, $queryArgument = false, $isDieEarly = true)
     {
+        // در صورت عدم تطبیق اکشن نامعتبر، مقدار بازگشتی تابع در حالت غیر die به صورت بولین false یا اینتجر خواهد بود.
         return check_ajax_referer($action, $queryArgument, $isDieEarly);
     }
 }
