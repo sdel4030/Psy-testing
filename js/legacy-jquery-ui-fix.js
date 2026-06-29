@@ -1,5 +1,8 @@
-// Nothing here as it's an empty stub for deregistered javascripts.
-if (typeof jQuery.curCSS === 'undefined') {
+/**
+ * Polyfill for deprecated jQuery.curCSS to ensure compatibility with WordPress 7+
+ * Bridges old plugin calls to the modern and native $.css() method.
+ */
+if (typeof jQuery !== 'undefined' && typeof jQuery.curCSS === 'undefined') {
     jQuery.curCSS = function(element, prop, val) {
         return jQuery(element).css(prop, val);
     };
